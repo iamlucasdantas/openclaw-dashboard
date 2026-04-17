@@ -1,5 +1,7 @@
-import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { Plus } from "lucide-react";
+import { prisma } from "@/lib/prisma";
+import { Button, PageHeader } from "@/components/form";
 
 export default async function AdminAgentsPage() {
   const agents = await prisma.agent.findMany({
@@ -9,12 +11,18 @@ export default async function AdminAgentsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Agentes</h1>
-        <p className="text-sm text-muted-foreground">
-          Todos os agentes registrados, agrupáveis por cliente.
-        </p>
-      </div>
+      <PageHeader
+        title="Agentes"
+        description="Todos os agentes registrados, agrupáveis por cliente."
+        actions={
+          <Link href="/admin/agents/new">
+            <Button>
+              <Plus className="h-4 w-4" />
+              Novo agente
+            </Button>
+          </Link>
+        }
+      />
 
       <div className="overflow-hidden rounded-lg border bg-card">
         <table className="w-full text-sm">
@@ -29,7 +37,7 @@ export default async function AdminAgentsPage() {
           </thead>
           <tbody>
             {agents.map((a) => (
-              <tr key={a.id} className="border-t">
+              <tr key={a.id} className="border-t hover:bg-muted/30">
                 <td className="px-5 py-3">
                   <Link
                     href={`/admin/tenants/${a.tenant.slug}`}
@@ -38,7 +46,14 @@ export default async function AdminAgentsPage() {
                     {a.tenant.name}
                   </Link>
                 </td>
-                <td className="px-5 py-3 font-medium">{a.name}</td>
+                <td className="px-5 py-3 font-medium">
+                  <Link
+                    href={`/admin/agents/${a.agentId}`}
+                    className="hover:underline"
+                  >
+                    {a.name}
+                  </Link>
+                </td>
                 <td className="px-5 py-3 text-muted-foreground">
                   <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
                     {a.agentId}
@@ -61,6 +76,16 @@ export default async function AdminAgentsPage() {
                 </td>
               </tr>
             ))}
+            {agents.length === 0 && (
+              <tr>
+                <td
+                  colSpan={5}
+                  className="px-5 py-10 text-center text-sm text-muted-foreground"
+                >
+                  Nenhum agente cadastrado ainda.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

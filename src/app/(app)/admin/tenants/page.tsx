@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
+import { Button, PageHeader } from "@/components/form";
 
 export default async function TenantsPage() {
   const tenants = await prisma.tenant.findMany({
@@ -12,15 +14,18 @@ export default async function TenantsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-end justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Clientes</h1>
-          <p className="text-sm text-muted-foreground">
-            Todos os tenants da infraestrutura, com contagem de agentes e
-            usuários.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Clientes"
+        description="Todos os tenants da infraestrutura, com contagem de agentes e usuários."
+        actions={
+          <Link href="/admin/tenants/new">
+            <Button>
+              <Plus className="h-4 w-4" />
+              Novo cliente
+            </Button>
+          </Link>
+        }
+      />
 
       <div className="overflow-hidden rounded-lg border bg-card">
         <table className="w-full text-sm">

@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pencil } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
+import { Button } from "@/components/form";
+import { DeleteButton } from "@/components/delete-button";
+import { deleteTenant } from "@/app/actions/tenants";
 
 export default async function TenantDetailPage({
   params,
@@ -20,6 +23,14 @@ export default async function TenantDetailPage({
 
   if (!tenant) notFound();
 
+  const agentCount = tenant.agents.length;
+  const userCount = tenant.memberships.length;
+
+  const deleteThisTenant = async () => {
+    "use server";
+    await deleteTenant(tenant.id);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -29,25 +40,48 @@ export default async function TenantDetailPage({
         >
           <ArrowLeft className="h-3 w-3" /> Voltar para clientes
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">
-          {tenant.name}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-            {tenant.slug}
-          </code>{" "}
-          · criado em {formatDate(tenant.createdAt)}
-        </p>
-        {tenant.description ? (
-          <p className="mt-2 text-sm">{tenant.description}</p>
-        ) : null}
+        <div className="mt-2 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {tenant.name}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
+                {tenant.slug}
+              </code>{" "}
+              · criado em {formatDate(tenant.createdAt)}
+            </p>
+            {tenant.description ? (
+              <p className="mt-2 text-sm">{tenant.description}</p>
+            ) : null}
+          </div>
+          <div className="flex gap-2">
+            <Link href={`/admin/tenants/${tenant.slug}/edit`}>
+              <Button variant="secondary">
+                <Pencil className="h-4 w-4" />
+                Editar
+              </Button>
+            </Link>
+            <form action={deleteThisTenant}>
+              <DeleteButton
+                message={`Excluir cliente "${tenant.name}"? Isso remove ${agentCount} agente(s) e ${userCount} vínculo(s) de usuário. Esta ação não pode ser desfeita.`}
+              />
+            </form>
+          </div>
+        </div>
       </div>
 
       <section className="rounded-lg border bg-card">
         <div className="flex items-center justify-between border-b px-5 py-3">
           <h2 className="text-sm font-semibold">
-            Agentes ({tenant.agents.length})
+            Agentes ({agentCount})
           </h2>
+          <Link
+            href={`/admin/agents/new?tenant=${tenant.slug}`}
+            className="text-xs text-primary hover:underline"
+          >
+            + Novo agente neste cliente
+          </Link>
         </div>
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
@@ -60,8 +94,15 @@ export default async function TenantDetailPage({
           </thead>
           <tbody>
             {tenant.agents.map((a) => (
-              <tr key={a.id} className="border-t">
-                <td className="px-5 py-2.5 font-medium">{a.name}</td>
+              <tr key={a.id} className="border-t hover:bg-muted/30">
+                <td className="px-5 py-2.5 font-medium">
+                  <Link
+                    href={`/admin/agents/${a.agentId}`}
+                    className="hover:underline"
+                  >
+                    {a.name}
+                  </Link>
+                </td>
                 <td className="px-5 py-2.5 text-muted-foreground">
                   <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
                     {a.agentId}
@@ -75,7 +116,7 @@ export default async function TenantDetailPage({
                 </td>
               </tr>
             ))}
-            {tenant.agents.length === 0 && (
+            {agentCount === 0 && (
               <tr>
                 <td
                   colSpan={4}
@@ -90,9 +131,9 @@ export default async function TenantDetailPage({
       </section>
 
       <section className="rounded-lg border bg-card">
-        <div className="border-b px-5 py-3">
+        <div className="flex items-center justify-between border-b px-5 py-3">
           <h2 className="text-sm font-semibold">
-            Usuários ({tenant.memberships.length})
+            Usuários ({userCount})
           </h2>
         </div>
         <table className="w-full text-sm">
@@ -106,7 +147,14 @@ export default async function TenantDetailPage({
           <tbody>
             {tenant.memberships.map((m) => (
               <tr key={m.id} className="border-t">
-                <td className="px-5 py-2.5 font-medium">{m.user.name}</td>
+                <td className="px-5 py-2.5 font-medium">
+                  <Link
+                    href={`/admin/users/${m.user.id}`}
+                    className="hover:underline"
+                  >
+                    {m.user.name}
+                  </Link>
+                </td>
                 <td className="px-5 py-2.5 text-muted-foreground">
                   {m.user.email}
                 </td>
@@ -122,13 +170,17 @@ export default async function TenantDetailPage({
                 </td>
               </tr>
             ))}
-            {tenant.memberships.length === 0 && (
+            {userCount === 0 && (
               <tr>
                 <td
                   colSpan={3}
                   className="px-5 py-8 text-center text-sm text-muted-foreground"
                 >
-                  Nenhum usuário vinculado a este cliente.
+                  Nenhum usuário vinculado. Adicione em{" "}
+                  <Link href="/admin/users" className="text-primary hover:underline">
+                    Usuários
+                  </Link>
+                  .
                 </td>
               </tr>
             )}

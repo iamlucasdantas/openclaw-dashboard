@@ -1,4 +1,7 @@
+import Link from "next/link";
+import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { Button, PageHeader } from "@/components/form";
 
 export default async function AdminUsersPage() {
   const users = await prisma.user.findMany({
@@ -10,12 +13,18 @@ export default async function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Usuários</h1>
-        <p className="text-sm text-muted-foreground">
-          Usuários do painel, com suas roles e tenants vinculados.
-        </p>
-      </div>
+      <PageHeader
+        title="Usuários"
+        description="Usuários do painel, com suas roles e tenants vinculados."
+        actions={
+          <Link href="/admin/users/new">
+            <Button>
+              <Plus className="h-4 w-4" />
+              Novo usuário
+            </Button>
+          </Link>
+        }
+      />
 
       <div className="overflow-hidden rounded-lg border bg-card">
         <table className="w-full text-sm">
@@ -29,8 +38,15 @@ export default async function AdminUsersPage() {
           </thead>
           <tbody>
             {users.map((u) => (
-              <tr key={u.id} className="border-t">
-                <td className="px-5 py-3 font-medium">{u.name}</td>
+              <tr key={u.id} className="border-t hover:bg-muted/30">
+                <td className="px-5 py-3 font-medium">
+                  <Link
+                    href={`/admin/users/${u.id}`}
+                    className="hover:underline"
+                  >
+                    {u.name}
+                  </Link>
+                </td>
                 <td className="px-5 py-3 text-muted-foreground">{u.email}</td>
                 <td className="px-5 py-3">
                   {u.isAdmin && (
