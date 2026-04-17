@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guards";
+import { audit } from "@/lib/audit";
 
 const slugRegex = /^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/;
 
@@ -33,9 +34,7 @@ function parseForm(formData: FormData) {
 
 function toFieldErrors(err: z.ZodError): Record<string, string> {
   const out: Record<string, string> = {};
-  for (const issue of err.issues) {
-    out[issue.path.join(".")] = issue.message;
-  }
+  for (const issue of err.issues) out[issue.path.join(".")] = issue.message;
   return out;
 }
 
@@ -47,8 +46,9 @@ export async function createTenant(
   const parsed = parseForm(formData);
   if (!parsed.success) return { fieldErrors: toFieldErrors(parsed.error) };
 
+  let created;
   try {
-    await prisma.tenant.create({
+    created = await prisma.tenant.create({
       data: {
         name: parsed.data.name,
         slug: parsed.data.slug,
@@ -62,6 +62,13 @@ export async function createTenant(
     return { error: "Erro ao criar cliente." };
   }
 
+  await audit({
+    action: "tenant.create",
+    entityType: "tenant",
+    entityId: created.id,
+    meta: { name: created.name, slug: created.slug },
+  });
+
   revalidatePath("/admin/tenants");
   redirect(`/admin/tenants/${parsed.data.slug}`);
 }
@@ -74,6 +81,8 @@ export async function updateTenant(
   await requireAdmin();
   const parsed = parseForm(formData);
   if (!parsed.success) return { fieldErrors: toFieldErrors(parsed.error) };
+
+  const before = await prisma.tenant.findUnique({ where: { id } });
 
   try {
     await prisma.tenant.update({
@@ -91,13 +100,36 @@ export async function updateTenant(
     return { error: "Erro ao atualizar cliente." };
   }
 
+  await audit({
+    action: "tenant.update",
+    entityType: "tenant",
+    entityId: id,
+    meta: {
+      before: before
+        ? { name: before.name, slug: before.slug, description: before.description }
+        : null,
+      after: {
+        name: parsed.data.name,
+        slug: parsed.data.slug,
+        description: parsed.data.description || null,
+      },
+    },
+  });
+
   revalidatePath("/admin/tenants");
   redirect(`/admin/tenants/${parsed.data.slug}`);
 }
 
 export async function deleteTenant(id: string) {
   await requireAdmin();
+  const before = await prisma.tenant.findUnique({ where: { id } });
   await prisma.tenant.delete({ where: { id } });
+  await audit({
+    action: "tenant.delete",
+    entityType: "tenant",
+    entityId: id,
+    meta: before ? { name: before.name, slug: before.slug } : null,
+  });
   revalidatePath("/admin/tenants");
   redirect("/admin/tenants");
 }

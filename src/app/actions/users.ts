@@ -6,6 +6,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, requireSession } from "@/lib/auth-guards";
+import { audit } from "@/lib/audit";
 
 const createUserSchema = z.object({
   name: z.string().trim().min(2).max(80),
@@ -67,6 +68,17 @@ export async function createUser(
     return { error: "Erro ao criar usuário." };
   }
 
+  await audit({
+    action: "user.create",
+    entityType: "user",
+    entityId: userId,
+    meta: {
+      name: parsed.data.name,
+      email: parsed.data.email,
+      isAdmin: parsed.data.isAdmin,
+    },
+  });
+
   revalidatePath("/admin/users");
   redirect(`/admin/users/${userId}`);
 }
@@ -84,10 +96,11 @@ export async function updateUser(
   });
   if (!parsed.success) return { fieldErrors: toFieldErrors(parsed.error) };
 
-  // Proteção: admin não pode tirar o próprio isAdmin (evita lock-out).
   if (session.user.id === id && !parsed.data.isAdmin) {
     return { error: "Você não pode remover sua própria role de admin." };
   }
+
+  const before = await prisma.user.findUnique({ where: { id } });
 
   try {
     await prisma.user.update({
@@ -104,6 +117,22 @@ export async function updateUser(
     }
     return { error: "Erro ao atualizar usuário." };
   }
+
+  await audit({
+    action: "user.update",
+    entityType: "user",
+    entityId: id,
+    meta: {
+      before: before
+        ? { name: before.name, email: before.email, isAdmin: before.isAdmin }
+        : null,
+      after: {
+        name: parsed.data.name,
+        email: parsed.data.email,
+        isAdmin: parsed.data.isAdmin,
+      },
+    },
+  });
 
   revalidatePath("/admin/users");
   return { success: "Alterações salvas." };
@@ -124,6 +153,14 @@ export async function setUserPassword(
     where: { id },
     data: { passwordHash: await bcrypt.hash(parsed.data.password, 10) },
   });
+
+  await audit({
+    action: "user.password_reset",
+    entityType: "user",
+    entityId: id,
+    meta: { by: "admin" },
+  });
+
   return { success: "Senha redefinida." };
 }
 
@@ -132,7 +169,14 @@ export async function deleteUser(id: string) {
   if (session.user.id === id) {
     throw new Error("Você não pode excluir sua própria conta.");
   }
+  const before = await prisma.user.findUnique({ where: { id } });
   await prisma.user.delete({ where: { id } });
+  await audit({
+    action: "user.delete",
+    entityType: "user",
+    entityId: id,
+    meta: before ? { name: before.name, email: before.email } : null,
+  });
   revalidatePath("/admin/users");
   redirect("/admin/users");
 }
@@ -161,6 +205,13 @@ export async function addMembership(formData: FormData) {
     create: parsed.data,
   });
 
+  await audit({
+    action: "membership.add",
+    entityType: "membership",
+    entityId: `${parsed.data.userId}:${parsed.data.tenantId}`,
+    meta: parsed.data,
+  });
+
   revalidatePath(`/admin/users/${parsed.data.userId}`);
 }
 
@@ -169,10 +220,15 @@ export async function removeMembership(userId: string, tenantId: string) {
   await prisma.membership.delete({
     where: { userId_tenantId: { userId, tenantId } },
   });
+  await audit({
+    action: "membership.remove",
+    entityType: "membership",
+    entityId: `${userId}:${tenantId}`,
+    meta: { userId, tenantId },
+  });
   revalidatePath(`/admin/users/${userId}`);
 }
 
-// Self-service: atualizar próprio perfil
 const profileSchema = z.object({
   name: z.string().trim().min(2).max(80),
 });
@@ -189,10 +245,22 @@ export async function updateOwnProfile(
   const parsed = profileSchema.safeParse({ name: formData.get("name") });
   if (!parsed.success) return { fieldErrors: toFieldErrors(parsed.error) };
 
+  const before = await prisma.user.findUnique({
+    where: { id: session.user.id },
+  });
+
   await prisma.user.update({
     where: { id: session.user.id },
     data: { name: parsed.data.name },
   });
+
+  await audit({
+    action: "profile.update",
+    entityType: "user",
+    entityId: session.user.id,
+    meta: { before: { name: before?.name }, after: { name: parsed.data.name } },
+  });
+
   revalidatePath("/client/profile");
   return { success: "Perfil atualizado." };
 }
@@ -222,5 +290,13 @@ export async function changeOwnPassword(
     where: { id: user.id },
     data: { passwordHash: await bcrypt.hash(parsed.data.newPassword, 10) },
   });
+
+  await audit({
+    action: "profile.password_change",
+    entityType: "user",
+    entityId: user.id,
+    meta: null,
+  });
+
   return { success: "Senha alterada." };
 }

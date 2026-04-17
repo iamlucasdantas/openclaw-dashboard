@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   Building2,
   Bot,
+  History,
   LayoutDashboard,
   Mail,
   Users,
@@ -17,6 +18,7 @@ export function Sidebar({ activeRole }: { activeRole: ActiveRole }) {
     { href: "/admin/agents", label: "Agentes", icon: Bot },
     { href: "/admin/users", label: "Usuários", icon: Users },
     { href: "/admin/invites", label: "Convites", icon: Mail },
+    { href: "/admin/audit", label: "Auditoria", icon: History },
   ];
 
   const clientNav = [

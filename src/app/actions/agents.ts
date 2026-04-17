@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth-guards";
+import { audit } from "@/lib/audit";
 
 const agentIdRegex = /^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$/;
 
@@ -74,8 +75,9 @@ export async function createAgent(
     return { error: "Você não tem acesso a este cliente." };
   }
 
+  let created;
   try {
-    await prisma.agent.create({
+    created = await prisma.agent.create({
       data: {
         name: parsed.data.name,
         agentId: parsed.data.agentId,
@@ -94,6 +96,18 @@ export async function createAgent(
     }
     return { error: "Erro ao criar agente." };
   }
+
+  await audit({
+    action: "agent.create",
+    entityType: "agent",
+    entityId: created.id,
+    meta: {
+      scope,
+      agentId: created.agentId,
+      name: created.name,
+      tenantId: created.tenantId,
+    },
+  });
 
   revalidatePath("/admin/agents");
   revalidatePath("/client/agents");
@@ -117,12 +131,10 @@ export async function updateAgent(
     return { error: "Você não tem acesso a este agente." };
   }
 
-  // Cliente não pode mover agente para outro tenant
   if (!session.user.isAdmin && parsed.data.tenantId !== existing.tenantId) {
     return { error: "Cliente não pode mover agente entre tenants." };
   }
 
-  // Ao mudar de tenant (admin), precisa ter acesso ao destino também
   if (!canWriteTenant(session, parsed.data.tenantId)) {
     return { error: "Você não tem acesso ao cliente de destino." };
   }
@@ -146,6 +158,29 @@ export async function updateAgent(
     return { error: "Erro ao atualizar agente." };
   }
 
+  await audit({
+    action: "agent.update",
+    entityType: "agent",
+    entityId: id,
+    meta: {
+      scope,
+      before: {
+        agentId: existing.agentId,
+        name: existing.name,
+        tenantId: existing.tenantId,
+        status: existing.status,
+        model: existing.model,
+      },
+      after: {
+        agentId: parsed.data.agentId,
+        name: parsed.data.name,
+        tenantId: parsed.data.tenantId,
+        status: parsed.data.status,
+        model: parsed.data.model || null,
+      },
+    },
+  });
+
   revalidatePath("/admin/agents");
   revalidatePath("/client/agents");
   redirectAfter(scope, parsed.data.agentId);
@@ -161,6 +196,18 @@ export async function deleteAgent(id: string, scope: Scope = "admin") {
   }
 
   await prisma.agent.delete({ where: { id } });
+  await audit({
+    action: "agent.delete",
+    entityType: "agent",
+    entityId: id,
+    meta: {
+      scope,
+      agentId: existing.agentId,
+      name: existing.name,
+      tenantId: existing.tenantId,
+    },
+  });
+
   revalidatePath("/admin/agents");
   revalidatePath("/client/agents");
   redirect(scope === "client" ? "/client/agents" : "/admin/agents");

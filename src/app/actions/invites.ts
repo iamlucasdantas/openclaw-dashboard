@@ -8,6 +8,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-guards";
 import { signIn } from "@/auth";
+import { audit } from "@/lib/audit";
 
 const DAYS_7_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -61,7 +62,7 @@ export async function createInvite(
 
   const token = randomBytes(24).toString("base64url");
 
-  await prisma.invite.create({
+  const created = await prisma.invite.create({
     data: {
       email: parsed.data.email,
       token,
@@ -72,13 +73,31 @@ export async function createInvite(
     },
   });
 
+  await audit({
+    action: "invite.create",
+    entityType: "invite",
+    entityId: created.id,
+    meta: {
+      email: created.email,
+      isAdmin: created.isAdmin,
+      tenantId: created.tenantId,
+    },
+  });
+
   revalidatePath("/admin/invites");
   redirect("/admin/invites");
 }
 
 export async function revokeInvite(id: string) {
   await requireAdmin();
+  const before = await prisma.invite.findUnique({ where: { id } });
   await prisma.invite.delete({ where: { id } });
+  await audit({
+    action: "invite.revoke",
+    entityType: "invite",
+    entityId: id,
+    meta: before ? { email: before.email, tenantId: before.tenantId } : null,
+  });
   revalidatePath("/admin/invites");
 }
 
@@ -118,7 +137,7 @@ export async function acceptInvite(
     return { error: "Já existe uma conta com este email. Faça login." };
   }
 
-  await prisma.$transaction(async (tx) => {
+  const newUserId = await prisma.$transaction(async (tx) => {
     const user = await tx.user.create({
       data: {
         email: invite.email,
@@ -138,6 +157,19 @@ export async function acceptInvite(
       where: { id: invite.id },
       data: { acceptedAt: new Date() },
     });
+    return user.id;
+  });
+
+  await audit({
+    action: "invite.accept",
+    entityType: "invite",
+    entityId: invite.id,
+    meta: {
+      email: invite.email,
+      newUserId,
+      tenantId: invite.tenantId,
+      isAdmin: invite.isAdmin,
+    },
   });
 
   // Sign in automatically

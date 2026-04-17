@@ -80,3 +80,20 @@ model Agent {
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
+
+// Log de todas as alterações significativas feitas via painel.
+// actor* são snapshots: mantemos mesmo se o usuário for removido.
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actorName  String?
+  actorEmail String?
+  action     String
+  entityType String
+  entityId   String?
+  meta       String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([entityType, entityId])
+}
