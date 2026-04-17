@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Tenant = cliente. Um cliente pode ter vários agentes e vários usuários.
+model Tenant {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  agents      Agent[]
+  memberships Membership[]
+}
+
+// Usuário do painel. Pode ser admin (global) e/ou membro de um ou mais tenants.
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  isAdmin      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  memberships  Membership[]
+}
+
+// Vínculo usuário <-> tenant (role client, com possibilidade de escopo futuro).
+model Membership {
+  id        String   @id @default(cuid())
+  userId    String
+  tenantId  String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tenantId])
+}
+
+model Agent {
+  id          String   @id @default(cuid())
+  agentId     String   @unique
+  name        String
+  tenantId    String
+  persona     String?
+  status      String   @default("offline")
+  model       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
