@@ -7,7 +7,10 @@ import { Button } from "@/components/form";
 import { DeleteButton } from "@/components/delete-button";
 import { StatusPill } from "@/components/status-pill";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { BudgetBar } from "@/components/budget-bar";
+import { TenantBudgetForm } from "@/components/budget-form";
 import { effectiveStatus } from "@/lib/agent-status";
+import { costByTenantThisMonth } from "@/lib/costs-queries";
 import { deleteTenant } from "@/app/actions/tenants";
 
 export default async function TenantDetailPage({
@@ -28,6 +31,10 @@ export default async function TenantDetailPage({
 
   const agentCount = tenant.agents.length;
   const userCount = tenant.memberships.length;
+
+  const tenantCosts = await costByTenantThisMonth([tenant.id]);
+  const myCost = tenantCosts.find((t) => t.tenantId === tenant.id);
+  const usedThisMonth = myCost?.costUsd ?? 0;
 
   const deleteThisTenant = async () => {
     "use server";
@@ -73,6 +80,23 @@ export default async function TenantDetailPage({
           </div>
         </div>
       </div>
+
+      <section className="rounded-lg border bg-card">
+        <div className="border-b px-5 py-3">
+          <h2 className="text-sm font-semibold">Limite mensal de custo</h2>
+          <p className="text-xs text-muted-foreground">
+            Configure um teto em USD para este cliente. Alertas visuais em
+            80%+ e destaque vermelho quando excedido.
+          </p>
+        </div>
+        <div className="space-y-4 p-5">
+          <BudgetBar used={usedThisMonth} budget={tenant.monthlyBudgetUsd} />
+          <TenantBudgetForm
+            tenantId={tenant.id}
+            current={tenant.monthlyBudgetUsd}
+          />
+        </div>
+      </section>
 
       <section className="rounded-lg border bg-card">
         <div className="flex items-center justify-between border-b px-5 py-3">

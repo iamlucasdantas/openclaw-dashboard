@@ -196,11 +196,193 @@ async function main() {
     console.log(`   • UsageEvents seeded: ${bulk.length}`);
   }
 
+  // Catálogo global de skills
+  const skillCatalog = [
+    {
+      slug: "gmail",
+      name: "Gmail",
+      category: "integration",
+      description: "Leitura/envio de emails via Gmail API.",
+      source: "clawhub",
+      version: "1.2.0",
+    },
+    {
+      slug: "google-calendar",
+      name: "Google Calendar",
+      category: "integration",
+      description: "Criar, listar e atualizar eventos.",
+      source: "clawhub",
+      version: "0.9.0",
+    },
+    {
+      slug: "github-ops",
+      name: "GitHub Ops",
+      category: "integration",
+      description: "Issues, PRs e reviews via gh CLI ou MCP.",
+      source: "clawhub",
+      version: "2.0.1",
+    },
+    {
+      slug: "slack-inbound",
+      name: "Slack Inbound",
+      category: "integration",
+      description: "Recebe mensagens e menções em canais Slack.",
+      source: "clawhub",
+      version: "1.0.0",
+    },
+    {
+      slug: "whatsapp-cloud",
+      name: "WhatsApp Cloud",
+      category: "integration",
+      description: "Envio/recebimento via WhatsApp Cloud API.",
+      source: "clawhub",
+      version: "1.4.2",
+    },
+    {
+      slug: "ci-alerts",
+      name: "CI Alerts",
+      category: "utility",
+      description: "Abre issue quando um workflow falha.",
+      source: "local",
+      version: "0.3.0",
+    },
+    {
+      slug: "react-loop",
+      name: "ReAct Loop",
+      category: "llm",
+      description: "Loop ReAct com tool calling padrão.",
+      source: "local",
+      version: "3.1.0",
+    },
+    {
+      slug: "memory-kv",
+      name: "Memory KV",
+      category: "utility",
+      description: "Armazenamento chave-valor de memória longa.",
+      source: "local",
+      version: "1.0.0",
+    },
+  ];
+  for (const s of skillCatalog) {
+    await prisma.skill.upsert({
+      where: { slug: s.slug },
+      update: s,
+      create: s,
+    });
+  }
+
+  // Instalar algumas skills nos agentes seedados
+  const lucasOpsAgent = await prisma.agent.findUnique({
+    where: { agentId: "lucas-ops-01" },
+  });
+  const acmeSupport = await prisma.agent.findUnique({
+    where: { agentId: "acme-wa-support-01" },
+  });
+  const initechBot = await prisma.agent.findUnique({
+    where: { agentId: "initech-github-bot" },
+  });
+  const getSkill = (slug: string) => prisma.skill.findUnique({ where: { slug } });
+
+  const seedAgentSkill = async (
+    agentDbId: string | undefined,
+    skillSlug: string,
+    enabled = true
+  ) => {
+    if (!agentDbId) return;
+    const sk = await getSkill(skillSlug);
+    if (!sk) return;
+    await prisma.agentSkill.upsert({
+      where: { agentId_skillId: { agentId: agentDbId, skillId: sk.id } },
+      update: { enabled },
+      create: { agentId: agentDbId, skillId: sk.id, enabled },
+    });
+  };
+
+  await seedAgentSkill(lucasOpsAgent?.id, "github-ops");
+  await seedAgentSkill(lucasOpsAgent?.id, "memory-kv");
+  await seedAgentSkill(lucasOpsAgent?.id, "react-loop");
+  await seedAgentSkill(acmeSupport?.id, "whatsapp-cloud");
+  await seedAgentSkill(acmeSupport?.id, "react-loop");
+  await seedAgentSkill(acmeSupport?.id, "memory-kv", false);
+  await seedAgentSkill(initechBot?.id, "github-ops");
+  await seedAgentSkill(initechBot?.id, "ci-alerts");
+
+  // Exemplos de cron
+  const seedCron = async (
+    agentDbId: string | undefined,
+    data: {
+      name: string;
+      schedule: string;
+      command: string;
+      state?: string;
+      lastRunStatus?: string;
+    }
+  ) => {
+    if (!agentDbId) return;
+    const existing = await prisma.agentCron.findFirst({
+      where: { agentId: agentDbId, name: data.name },
+    });
+    if (existing) return;
+    await prisma.agentCron.create({
+      data: {
+        agentId: agentDbId,
+        ...data,
+        lastRunAt: data.lastRunStatus ? new Date(Date.now() - 60 * 60 * 1000) : null,
+      },
+    });
+  };
+
+  await seedCron(lucasOpsAgent?.id, {
+    name: "Revisar PRs abertos",
+    schedule: "*/30 * * * *",
+    command: "skill:github-ops review-open-prs",
+    state: "active",
+    lastRunStatus: "ok",
+  });
+  await seedCron(lucasOpsAgent?.id, {
+    name: "Resumo diário de issues",
+    schedule: "0 9 * * *",
+    command: "skill:github-ops daily-issue-digest",
+    state: "active",
+    lastRunStatus: "ok",
+  });
+  await seedCron(initechBot?.id, {
+    name: "Abrir issue em falha de CI",
+    schedule: "@hourly",
+    command: "skill:ci-alerts on-failure",
+    state: "paused",
+    lastRunStatus: "error",
+  });
+  await seedCron(acmeSupport?.id, {
+    name: "Relatório semanal de atendimento",
+    schedule: "0 8 * * 1",
+    command: "prompt:generate-weekly-report",
+    state: "active",
+  });
+
+  // Limites de custo
+  const acmeTenant = await prisma.tenant.findUnique({ where: { slug: "acme" } });
+  if (acmeTenant && acmeTenant.monthlyBudgetUsd == null) {
+    await prisma.tenant.update({
+      where: { id: acmeTenant.id },
+      data: { monthlyBudgetUsd: 100 },
+    });
+  }
+  if (acmeSupport) {
+    await prisma.agent.update({
+      where: { id: acmeSupport.id },
+      data: { monthlyBudgetUsd: 60 },
+    });
+  }
+
   console.log("✅  Seed concluído:");
-  console.log(`   • Tenants: ${await prisma.tenant.count()}`);
-  console.log(`   • Users:   ${await prisma.user.count()}`);
-  console.log(`   • Agents:  ${await prisma.agent.count()}`);
-  console.log(`   • Events:  ${await prisma.usageEvent.count()}`);
+  console.log(`   • Tenants:     ${await prisma.tenant.count()}`);
+  console.log(`   • Users:       ${await prisma.user.count()}`);
+  console.log(`   • Agents:      ${await prisma.agent.count()}`);
+  console.log(`   • Skills:      ${await prisma.skill.count()}`);
+  console.log(`   • AgentSkills: ${await prisma.agentSkill.count()}`);
+  console.log(`   • Crons:       ${await prisma.agentCron.count()}`);
+  console.log(`   • Events:      ${await prisma.usageEvent.count()}`);
   console.log("");
   console.log("   Login: lucas.odantas@gmail.com  /  senha: changeme");
 }

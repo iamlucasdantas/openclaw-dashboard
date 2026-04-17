@@ -61,47 +61,70 @@ export async function costByAgentThisMonth(agentIds?: string[]) {
         tenantSlug: a?.tenant.slug,
         costUsd: r._sum.costUsd ?? 0,
         tokens: (r._sum.inputTokens ?? 0) + (r._sum.outputTokens ?? 0),
+        budgetUsd: a?.monthlyBudgetUsd ?? null,
       };
     })
     .sort((a, b) => b.costUsd - a.costUsd);
 }
 
+export async function costForAgentThisMonth(agentDbId: string): Promise<number> {
+  const r = await prisma.usageEvent.aggregate({
+    where: { agentId: agentDbId, occurredAt: { gte: startOfMonth() } },
+    _sum: { costUsd: true },
+  });
+  return r._sum.costUsd ?? 0;
+}
+
 export async function costByTenantThisMonth(tenantIds?: string[]) {
-  // precisa de join: agrupar por agentId primeiro, depois somar por tenant
   const rows = await prisma.usageEvent.groupBy({
     by: ["agentId"],
     where: { occurredAt: { gte: startOfMonth() } },
     _sum: { costUsd: true, inputTokens: true, outputTokens: true },
+  });
+  const allTenants = await prisma.tenant.findMany({
+    where: tenantIds ? { id: { in: tenantIds } } : undefined,
   });
   const agents = await prisma.agent.findMany({
     where: {
       id: { in: rows.map((r) => r.agentId) },
       ...(tenantIds ? { tenantId: { in: tenantIds } } : {}),
     },
-    include: { tenant: true },
   });
   const byAgent = new Map(rows.map((r) => [r.agentId, r]));
 
-  const map = new Map<
+  const baseMap = new Map<
     string,
-    { tenantId: string; name: string; slug: string; costUsd: number; tokens: number }
+    {
+      tenantId: string;
+      name: string;
+      slug: string;
+      costUsd: number;
+      tokens: number;
+      budgetUsd: number | null;
+    }
   >();
+  for (const t of allTenants) {
+    baseMap.set(t.id, {
+      tenantId: t.id,
+      name: t.name,
+      slug: t.slug,
+      costUsd: 0,
+      tokens: 0,
+      budgetUsd: t.monthlyBudgetUsd,
+    });
+  }
   for (const a of agents) {
     const r = byAgent.get(a.id);
     if (!r) continue;
-    const current = map.get(a.tenantId) ?? {
-      tenantId: a.tenantId,
-      name: a.tenant.name,
-      slug: a.tenant.slug,
-      costUsd: 0,
-      tokens: 0,
-    };
+    const current = baseMap.get(a.tenantId);
+    if (!current) continue;
     current.costUsd += r._sum.costUsd ?? 0;
     current.tokens += (r._sum.inputTokens ?? 0) + (r._sum.outputTokens ?? 0);
-    map.set(a.tenantId, current);
   }
 
-  return Array.from(map.values()).sort((a, b) => b.costUsd - a.costUsd);
+  return Array.from(baseMap.values())
+    .filter((t) => t.costUsd > 0 || t.budgetUsd != null)
+    .sort((a, b) => b.costUsd - a.costUsd);
 }
 
 export async function costByDayThisMonth(agentIds?: string[]) {

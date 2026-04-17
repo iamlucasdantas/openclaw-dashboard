@@ -2,11 +2,13 @@ import Link from "next/link";
 import {
   Building2,
   Bot,
+  Clock,
   DollarSign,
   Github,
   History,
   LayoutDashboard,
   Mail,
+  Sparkles,
   Users,
   UserCog,
 } from "lucide-react";
@@ -19,6 +21,8 @@ export function Sidebar({ activeRole }: { activeRole: ActiveRole }) {
     { href: "/admin/tenants", label: "Clientes", icon: Building2 },
     { href: "/admin/agents", label: "Agentes", icon: Bot },
     { href: "/admin/github", label: "GitHub", icon: Github },
+    { href: "/admin/skills", label: "Skills", icon: Sparkles },
+    { href: "/admin/crons", label: "Crons", icon: Clock },
     { href: "/admin/costs", label: "Custos", icon: DollarSign },
     { href: "/admin/users", label: "Usuários", icon: Users },
     { href: "/admin/invites", label: "Convites", icon: Mail },

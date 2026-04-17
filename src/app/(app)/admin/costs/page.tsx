@@ -2,6 +2,7 @@ import Link from "next/link";
 import { DollarSign } from "lucide-react";
 import { PageHeader } from "@/components/form";
 import { CostBarChart } from "@/components/cost-chart";
+import { BudgetBar } from "@/components/budget-bar";
 import { formatTokens, formatUsd } from "@/lib/costs";
 import {
   costByAgentThisMonth,
@@ -59,14 +60,19 @@ export default async function AdminCostsPage() {
             </thead>
             <tbody>
               {byTenant.map((t) => (
-                <tr key={t.tenantId} className="border-t">
-                  <td className="px-5 py-2.5 font-medium">
+                <tr key={t.tenantId} className="border-t align-top">
+                  <td className="px-5 py-2.5">
                     <Link
                       href={`/admin/tenants/${t.slug}`}
-                      className="hover:underline"
+                      className="font-medium hover:underline"
                     >
                       {t.name}
                     </Link>
+                    {t.budgetUsd ? (
+                      <div className="mt-1 w-64">
+                        <BudgetBar used={t.costUsd} budget={t.budgetUsd} />
+                      </div>
+                    ) : null}
                   </td>
                   <td className="px-5 py-2.5 text-right tabular-nums text-muted-foreground">
                     {formatTokens(t.tokens)}
@@ -104,7 +110,7 @@ export default async function AdminCostsPage() {
             </thead>
             <tbody>
               {byAgent.slice(0, 10).map((a) => (
-                <tr key={a.agentDbId} className="border-t">
+                <tr key={a.agentDbId} className="border-t align-top">
                   <td className="px-5 py-2.5">
                     <Link
                       href={`/admin/agents/${a.agentId}`}
@@ -115,6 +121,11 @@ export default async function AdminCostsPage() {
                     <div className="text-xs text-muted-foreground">
                       {a.tenantName}
                     </div>
+                    {a.budgetUsd ? (
+                      <div className="mt-1 w-64">
+                        <BudgetBar used={a.costUsd} budget={a.budgetUsd} />
+                      </div>
+                    ) : null}
                   </td>
                   <td className="px-5 py-2.5 text-right tabular-nums text-muted-foreground">
                     {formatTokens(a.tokens)}

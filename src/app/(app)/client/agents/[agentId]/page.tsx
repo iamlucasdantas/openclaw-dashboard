@@ -11,6 +11,11 @@ import { StatusPill } from "@/components/status-pill";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { HeartbeatIntegration } from "@/components/heartbeat-integration";
 import { GithubSection } from "@/components/github-integration";
+import { SkillsManager } from "@/components/skills-manager";
+import { CronsManager } from "@/components/crons-manager";
+import { BudgetBar } from "@/components/budget-bar";
+import { AgentBudgetForm } from "@/components/budget-form";
+import { costForAgentThisMonth } from "@/lib/costs-queries";
 import { deleteAgent } from "@/app/actions/agents";
 
 export default async function ClientAgentDetailPage({
@@ -23,15 +28,25 @@ export default async function ClientAgentDetailPage({
   const tenantIds = session.user.tenantIds ?? [];
 
   const { agentId } = await params;
-  const agent = await prisma.agent.findUnique({
-    where: { agentId },
-    include: {
-      tenant: true,
-      github: { include: { repos: { orderBy: [{ owner: "asc" }, { name: "asc" }] } } },
-    },
-  });
+  const [agent, skillCatalog] = await Promise.all([
+    prisma.agent.findUnique({
+      where: { agentId },
+      include: {
+        tenant: true,
+        github: { include: { repos: { orderBy: [{ owner: "asc" }, { name: "asc" }] } } },
+        skills: { include: { skill: true }, orderBy: { createdAt: "asc" } },
+        crons: { orderBy: { createdAt: "asc" } },
+      },
+    }),
+    prisma.skill.findMany({
+      orderBy: [{ category: "asc" }, { name: "asc" }],
+      select: { id: true, slug: true, name: true, category: true },
+    }),
+  ]);
   if (!agent) notFound();
   if (!tenantIds.includes(agent.tenantId)) notFound();
+
+  const usedThisMonth = await costForAgentThisMonth(agent.id);
 
   const deleteThisAgent = async () => {
     "use server";
@@ -100,6 +115,20 @@ export default async function ClientAgentDetailPage({
         </section>
       ) : null}
 
+      <section className="rounded-lg border bg-card">
+        <div className="border-b px-5 py-3">
+          <h2 className="text-sm font-semibold">Limite mensal de custo</h2>
+        </div>
+        <div className="space-y-4 p-5">
+          <BudgetBar used={usedThisMonth} budget={agent.monthlyBudgetUsd} />
+          <AgentBudgetForm
+            agentDbId={agent.id}
+            scope="client"
+            current={agent.monthlyBudgetUsd}
+          />
+        </div>
+      </section>
+
       <HeartbeatIntegration agent={agent} scope="client" />
 
       <GithubSection
@@ -124,6 +153,25 @@ export default async function ClientAgentDetailPage({
             : null
         }
       />
+
+      <SkillsManager
+        agentDbId={agent.id}
+        scope="client"
+        installed={agent.skills.map((s) => ({
+          id: s.id,
+          enabled: s.enabled,
+          skill: {
+            id: s.skill.id,
+            slug: s.skill.slug,
+            name: s.skill.name,
+            category: s.skill.category,
+            version: s.skill.version,
+          },
+        }))}
+        catalog={skillCatalog}
+      />
+
+      <CronsManager agentDbId={agent.id} scope="client" crons={agent.crons} />
     </div>
   );
 }

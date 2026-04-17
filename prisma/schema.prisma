@@ -9,12 +9,13 @@ datasource db {
 
 // Tenant = cliente. Um cliente pode ter vários agentes e vários usuários.
 model Tenant {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  slug               String   @unique
+  name               String
+  description        String?
+  monthlyBudgetUsd   Float?   // limite mensal agregado (opcional)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   agents      Agent[]
   memberships Membership[]
@@ -81,9 +82,62 @@ model Agent {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
+  monthlyBudgetUsd Float?
+
   tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   usageEvents UsageEvent[]
   github      GithubIntegration?
+  skills      AgentSkill[]
+  crons       AgentCron[]
+}
+
+// Catálogo de skills disponíveis. Global (não multi-tenant): todo
+// cliente escolhe a partir deste catálogo o que instalar nos agentes.
+model Skill {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  category    String   // integration | llm | utility | ...
+  description String?
+  source      String?  // ex: "clawhub" | "local"
+  version     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  installations AgentSkill[]
+}
+
+// Skill instalada em um agente específico.
+model AgentSkill {
+  id        String   @id @default(cuid())
+  agentId   String
+  skillId   String
+  enabled   Boolean  @default(true)
+  config    String?  // JSON stringified
+  createdAt DateTime @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, skillId])
+}
+
+// Cron / tarefa agendada por agente.
+model AgentCron {
+  id             String    @id @default(cuid())
+  agentId        String
+  name           String
+  schedule       String    // cron expression ou "@hourly" etc.
+  command        String    // o que o agente vai rodar/prompt/skill
+  state          String    @default("active") // active | paused | disabled
+  lastRunAt      DateTime?
+  lastRunStatus  String?   // ok | error
+  lastRunMessage String?
+  nextRunAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
 }
 
 // Registro de como o agente se integra ao GitHub. O dashboard NÃO
