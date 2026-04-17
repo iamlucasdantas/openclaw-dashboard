@@ -9,6 +9,7 @@ import { DeleteButton } from "@/components/delete-button";
 import { StatusPill } from "@/components/status-pill";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { HeartbeatIntegration } from "@/components/heartbeat-integration";
+import { GithubSection } from "@/components/github-integration";
 import { deleteAgent } from "@/app/actions/agents";
 
 export default async function AgentDetailPage({
@@ -19,7 +20,10 @@ export default async function AgentDetailPage({
   const { agentId } = await params;
   const agent = await prisma.agent.findUnique({
     where: { agentId },
-    include: { tenant: true },
+    include: {
+      tenant: true,
+      github: { include: { repos: { orderBy: [{ owner: "asc" }, { name: "asc" }] } } },
+    },
   });
   if (!agent) notFound();
 
@@ -97,6 +101,29 @@ export default async function AgentDetailPage({
       ) : null}
 
       <HeartbeatIntegration agent={agent} scope="admin" />
+
+      <GithubSection
+        agentDbId={agent.id}
+        scope="admin"
+        integration={
+          agent.github
+            ? {
+                id: agent.github.id,
+                mode: agent.github.mode,
+                scope: agent.github.scope,
+                org: agent.github.org,
+                defaultBranch: agent.github.defaultBranch,
+                tokenPreview: agent.github.tokenPreview,
+                repos: agent.github.repos.map((r) => ({
+                  id: r.id,
+                  owner: r.owner,
+                  name: r.name,
+                  role: r.role,
+                })),
+              }
+            : null
+        }
+      />
     </div>
   );
 }

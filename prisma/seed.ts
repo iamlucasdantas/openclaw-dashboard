@@ -116,6 +116,42 @@ async function main() {
     });
   }
 
+  // Exemplo de integração GitHub para lucas-ops-01
+  const lucasOps = await prisma.agent.findUnique({
+    where: { agentId: "lucas-ops-01" },
+  });
+  if (lucasOps) {
+    const gh = await prisma.githubIntegration.upsert({
+      where: { agentId: lucasOps.id },
+      update: {},
+      create: {
+        agentId: lucasOps.id,
+        mode: "gh-cli",
+        scope: "prs",
+        org: "iamlucasdantas",
+        defaultBranch: "main",
+        tokenPreview: "a1b2",
+      },
+    });
+    const repos = [
+      { owner: "iamlucasdantas", name: "openclaw-dashboard", role: "admin" },
+      { owner: "iamlucasdantas", name: "openclaw", role: "write" },
+    ];
+    for (const r of repos) {
+      await prisma.githubRepo.upsert({
+        where: {
+          integrationId_owner_name: {
+            integrationId: gh.id,
+            owner: r.owner,
+            name: r.name,
+          },
+        },
+        update: {},
+        create: { ...r, integrationId: gh.id },
+      });
+    }
+  }
+
   // Custos fake: 30 dias de uso por agente, volume e perfil por agente.
   const existingEvents = await prisma.usageEvent.count();
   if (existingEvents === 0) {

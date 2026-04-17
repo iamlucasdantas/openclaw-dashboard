@@ -81,8 +81,40 @@ model Agent {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   usageEvents UsageEvent[]
+  github      GithubIntegration?
+}
+
+// Registro de como o agente se integra ao GitHub. O dashboard NÃO
+// armazena o token — apenas metadados (modo, escopo, preview dos
+// últimos 4 chars digitados para confirmação visual).
+model GithubIntegration {
+  id            String   @id @default(cuid())
+  agentId       String   @unique
+  mode          String   // gh-cli | mcp | api
+  scope         String   // read | issues | prs | admin
+  org           String?
+  defaultBranch String?
+  tokenPreview  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  agent Agent        @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  repos GithubRepo[]
+}
+
+model GithubRepo {
+  id            String   @id @default(cuid())
+  integrationId String
+  owner         String
+  name          String
+  role          String   // read | write | admin
+  createdAt     DateTime @default(now())
+
+  integration GithubIntegration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@unique([integrationId, owner, name])
 }
 
 // Evento append-only de uso de LLM. Cada chamada do agente pode gerar
