@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -76,9 +77,14 @@ export default async function ClientOverview() {
             </thead>
             <tbody>
               {t.agents.map((a) => (
-                <tr key={a.id} className="border-t">
+                <tr key={a.id} className="border-t hover:bg-muted/30">
                   <td className="px-5 py-2.5">
-                    <div className="font-medium">{a.name}</div>
+                    <Link
+                      href={`/client/agents/${a.agentId}`}
+                      className="font-medium hover:underline"
+                    >
+                      {a.name}
+                    </Link>
                     <div className="text-xs text-muted-foreground">
                       {a.agentId}
                     </div>

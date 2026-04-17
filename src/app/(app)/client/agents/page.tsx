@@ -1,6 +1,9 @@
+import Link from "next/link";
+import { Plus } from "lucide-react";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { Button, PageHeader } from "@/components/form";
 
 export default async function ClientAgentsPage() {
   const session = await auth();
@@ -14,14 +17,24 @@ export default async function ClientAgentsPage() {
     orderBy: [{ tenant: { name: "asc" } }, { name: "asc" }],
   });
 
+  const canCreate = tenantIds.length > 0;
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Meus agentes</h1>
-        <p className="text-sm text-muted-foreground">
-          Todos os agentes vinculados aos seus tenants.
-        </p>
-      </div>
+      <PageHeader
+        title="Meus agentes"
+        description="Todos os agentes vinculados aos seus tenants."
+        actions={
+          canCreate ? (
+            <Link href="/client/agents/new">
+              <Button>
+                <Plus className="h-4 w-4" />
+                Novo agente
+              </Button>
+            </Link>
+          ) : null
+        }
+      />
 
       <div className="overflow-hidden rounded-lg border bg-card">
         <table className="w-full text-sm">
@@ -36,9 +49,16 @@ export default async function ClientAgentsPage() {
           </thead>
           <tbody>
             {agents.map((a) => (
-              <tr key={a.id} className="border-t">
+              <tr key={a.id} className="border-t hover:bg-muted/30">
                 <td className="px-5 py-3">{a.tenant.name}</td>
-                <td className="px-5 py-3 font-medium">{a.name}</td>
+                <td className="px-5 py-3 font-medium">
+                  <Link
+                    href={`/client/agents/${a.agentId}`}
+                    className="hover:underline"
+                  >
+                    {a.name}
+                  </Link>
+                </td>
                 <td className="px-5 py-3 text-muted-foreground">
                   <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
                     {a.agentId}

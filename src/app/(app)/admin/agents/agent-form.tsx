@@ -27,11 +27,14 @@ function Submit({ label }: { label: string }) {
 
 export function AgentForm({
   mode,
+  scope = "admin",
   tenants,
   initial,
   defaultTenantId,
+  cancelHref,
 }: {
   mode: "create" | "edit";
+  scope?: "admin" | "client";
   tenants: { id: string; name: string; slug: string }[];
   initial?: {
     id: string;
@@ -43,6 +46,7 @@ export function AgentForm({
     status: string;
   };
   defaultTenantId?: string;
+  cancelHref?: string;
 }) {
   const action =
     mode === "edit" && initial
@@ -51,23 +55,40 @@ export function AgentForm({
 
   const [state, formAction] = useFormState<AgentFormState, FormData>(action, {});
 
+  const tenantLocked = scope === "client" && mode === "edit";
+  const selectedTenant = tenants.find(
+    (t) => t.id === (initial?.tenantId ?? defaultTenantId ?? tenants[0]?.id)
+  );
+
+  const cancel =
+    cancelHref ?? (scope === "client" ? "/client/agents" : "/admin/agents");
+
   return (
     <form action={formAction} className="max-w-xl space-y-5">
+      <input type="hidden" name="scope" value={scope} />
+
       <Field label="Cliente (tenant)" error={state.fieldErrors?.tenantId}>
-        <Select
-          name="tenantId"
-          required
-          defaultValue={initial?.tenantId ?? defaultTenantId ?? ""}
-        >
-          <option value="" disabled>
-            Selecione um cliente...
-          </option>
-          {tenants.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name} ({t.slug})
+        {tenantLocked && selectedTenant ? (
+          <>
+            <Input value={`${selectedTenant.name} (${selectedTenant.slug})`} disabled readOnly />
+            <input type="hidden" name="tenantId" value={selectedTenant.id} />
+          </>
+        ) : (
+          <Select
+            name="tenantId"
+            required
+            defaultValue={initial?.tenantId ?? defaultTenantId ?? ""}
+          >
+            <option value="" disabled>
+              Selecione um cliente...
             </option>
-          ))}
-        </Select>
+            {tenants.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name} ({t.slug})
+              </option>
+            ))}
+          </Select>
+        )}
       </Field>
 
       <Field label="Nome amigável" error={state.fieldErrors?.name}>
@@ -123,7 +144,7 @@ export function AgentForm({
 
       <div className="flex gap-2">
         <Submit label={mode === "create" ? "Criar agente" : "Salvar"} />
-        <Link href="/admin/agents">
+        <Link href={cancel}>
           <Button type="button" variant="secondary">
             Cancelar
           </Button>
