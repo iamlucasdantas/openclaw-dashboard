@@ -11,6 +11,7 @@ export default auth((req) => {
 
   const isPublic =
     path === "/login" ||
+    path.startsWith("/invite/") ||
     path.startsWith("/api/auth") ||
     path.startsWith("/_next");
 

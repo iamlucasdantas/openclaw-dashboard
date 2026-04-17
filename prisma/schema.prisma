@@ -18,6 +18,7 @@ model Tenant {
 
   agents      Agent[]
   memberships Membership[]
+  invites     Invite[]
 }
 
 // Usuário do painel. Pode ser admin (global) e/ou membro de um ou mais tenants.
@@ -30,7 +31,27 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  memberships  Membership[]
+  memberships     Membership[]
+  createdInvites  Invite[]     @relation("InviteCreator")
+}
+
+// Convite para criar conta no painel. O token fica em texto (prototipo):
+// admin precisa ver o link para copiar, já que não há SMTP.
+model Invite {
+  id         String    @id @default(cuid())
+  email      String
+  token      String    @unique
+  isAdmin    Boolean   @default(false)
+  tenantId   String?
+  createdBy  String
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  tenant  Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  creator User    @relation("InviteCreator", fields: [createdBy], references: [id])
+
+  @@index([email])
 }
 
 // Vínculo usuário <-> tenant (role client, com possibilidade de escopo futuro).
