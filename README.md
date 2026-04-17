@@ -17,7 +17,7 @@ na mesma conta.
 npm install
 npx prisma db push       # cria prisma/dev.db
 npm run db:seed          # tenants, usuário, agentes, skills, crons, custos
-npm run dev              # http://localhost:3000
+npm run dev              # http://localhost:3100
 ```
 
 ### Conta seed
@@ -67,7 +67,7 @@ npm run dev              # http://localhost:3000
 Na página do agente em **admin**, revele o secret (botão olho) e copie. Depois:
 
 ```bash
-curl -X POST http://localhost:3000/api/agents/lucas-ops-01/heartbeat \
+curl -X POST http://localhost:3100/api/agents/lucas-ops-01/heartbeat \
   -H "Authorization: Bearer <secret>" \
   -H "Content-Type: application/json" \
   -d '{"version":"1.2.3","status":"online"}'
