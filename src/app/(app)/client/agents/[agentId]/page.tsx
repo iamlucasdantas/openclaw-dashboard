@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
@@ -8,6 +8,7 @@ import { effectiveStatus } from "@/lib/agent-status";
 import { Button } from "@/components/form";
 import { DeleteButton } from "@/components/delete-button";
 import { StatusPill } from "@/components/status-pill";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import { HeartbeatIntegration } from "@/components/heartbeat-integration";
 import { deleteAgent } from "@/app/actions/agents";
 
@@ -38,12 +39,12 @@ export default async function ClientAgentDetailPage({
   return (
     <div className="space-y-6">
       <div>
-        <Link
-          href="/client/agents"
-          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:underline"
-        >
-          <ArrowLeft className="h-3 w-3" /> Voltar para meus agentes
-        </Link>
+        <Breadcrumbs
+          items={[
+            { label: "Meus agentes", href: "/client/agents" },
+            { label: agent.name },
+          ]}
+        />
         <div className="mt-2 flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">

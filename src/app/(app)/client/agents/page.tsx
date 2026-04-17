@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Bot, Plus } from "lucide-react";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Button, PageHeader } from "@/components/form";
 import { StatusPill } from "@/components/status-pill";
+import { EmptyState } from "@/components/empty-state";
 import { effectiveStatus } from "@/lib/agent-status";
 
 export default async function ClientAgentsPage() {
@@ -75,14 +76,21 @@ export default async function ClientAgentsPage() {
               </tr>
             ))}
             {agents.length === 0 && (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="px-5 py-10 text-center text-sm text-muted-foreground"
-                >
-                  Você ainda não tem agentes registrados.
-                </td>
-              </tr>
+              <EmptyState
+                colSpan={5}
+                icon={<Bot className="h-5 w-5" />}
+                title="Você ainda não tem agentes"
+                description={
+                  canCreate
+                    ? "Crie seu primeiro agente em um dos seus clientes."
+                    : "Peça ao admin para vincular você a um cliente."
+                }
+                action={
+                  canCreate
+                    ? { label: "Novo agente", href: "/client/agents/new" }
+                    : undefined
+                }
+              />
             )}
           </tbody>
         </table>

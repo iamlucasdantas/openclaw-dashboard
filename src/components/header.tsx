@@ -1,16 +1,20 @@
 import { LogOut } from "lucide-react";
 import { logoutAction } from "@/app/actions/auth";
 import type { ActiveRole } from "@/lib/active-role";
+import type { Theme } from "@/lib/theme";
 import { RoleSwitcher } from "./role-switcher";
+import { ThemeToggle } from "./theme-toggle";
 
 export function Header({
   user,
   activeRole,
   availableRoles,
+  theme,
 }: {
   user: { name: string; email: string };
   activeRole: ActiveRole;
   availableRoles: ActiveRole[];
+  theme: Theme;
 }) {
   return (
     <header className="flex h-14 items-center justify-between border-b bg-card px-6">
@@ -27,8 +31,9 @@ export function Header({
         </p>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <RoleSwitcher activeRole={activeRole} availableRoles={availableRoles} />
+        <ThemeToggle theme={theme} />
 
         <div className="hidden flex-col items-end sm:flex">
           <span className="text-sm font-medium leading-tight">{user.name}</span>

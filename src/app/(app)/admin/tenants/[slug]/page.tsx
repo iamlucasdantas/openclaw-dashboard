@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/form";
 import { DeleteButton } from "@/components/delete-button";
 import { StatusPill } from "@/components/status-pill";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import { effectiveStatus } from "@/lib/agent-status";
 import { deleteTenant } from "@/app/actions/tenants";
 
@@ -36,12 +37,12 @@ export default async function TenantDetailPage({
   return (
     <div className="space-y-6">
       <div>
-        <Link
-          href="/admin/tenants"
-          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:underline"
-        >
-          <ArrowLeft className="h-3 w-3" /> Voltar para clientes
-        </Link>
+        <Breadcrumbs
+          items={[
+            { label: "Clientes", href: "/admin/tenants" },
+            { label: tenant.name },
+          ]}
+        />
         <div className="mt-2 flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">

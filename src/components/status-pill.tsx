@@ -3,17 +3,17 @@ import type { EffectiveStatus } from "@/lib/agent-status";
 const MAP: Record<EffectiveStatus, { label: string; css: string; dot: string }> = {
   online: {
     label: "online",
-    css: "bg-emerald-50 text-emerald-700",
+    css: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
     dot: "bg-emerald-500",
   },
   stale: {
     label: "sem heartbeat",
-    css: "bg-amber-50 text-amber-700",
+    css: "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
     dot: "bg-amber-500",
   },
   degraded: {
     label: "degradado",
-    css: "bg-orange-50 text-orange-700",
+    css: "bg-orange-50 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300",
     dot: "bg-orange-500",
   },
   offline: {

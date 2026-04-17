@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { availableRoles, getActiveRole } from "@/lib/active-role";
+import { getTheme } from "@/lib/theme";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
 
@@ -16,6 +17,7 @@ export default async function AppLayout({
   const hasTenants = (session.user.tenantIds ?? []).length > 0;
   const roles = availableRoles({ isAdmin, hasTenants });
   const activeRole = await getActiveRole({ isAdmin, hasTenants });
+  const theme = await getTheme();
 
   return (
     <div className="flex min-h-screen bg-muted/30">
@@ -25,6 +27,7 @@ export default async function AppLayout({
           user={{ name: session.user.name ?? "", email: session.user.email ?? "" }}
           activeRole={activeRole}
           availableRoles={roles}
+          theme={theme}
         />
         <main className="flex-1 p-6">{children}</main>
       </div>

@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { effectiveStatus } from "@/lib/agent-status";
 import { Button } from "@/components/form";
 import { DeleteButton } from "@/components/delete-button";
 import { StatusPill } from "@/components/status-pill";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import { HeartbeatIntegration } from "@/components/heartbeat-integration";
 import { deleteAgent } from "@/app/actions/agents";
 
@@ -32,12 +33,12 @@ export default async function AgentDetailPage({
   return (
     <div className="space-y-6">
       <div>
-        <Link
-          href="/admin/agents"
-          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:underline"
-        >
-          <ArrowLeft className="h-3 w-3" /> Voltar para agentes
-        </Link>
+        <Breadcrumbs
+          items={[
+            { label: "Agentes", href: "/admin/agents" },
+            { label: agent.name },
+          ]}
+        />
         <div className="mt-2 flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">

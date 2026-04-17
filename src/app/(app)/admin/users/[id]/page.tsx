@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { formatDate } from "@/lib/utils";
 import { Button, Select } from "@/components/form";
 import { DeleteButton } from "@/components/delete-button";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import { EditUserForm, SetPasswordForm } from "../user-form";
 import { RemoveMembershipButton } from "../memberships";
 import { addMembership, deleteUser } from "@/app/actions/users";
@@ -42,12 +42,12 @@ export default async function UserDetailPage({
   return (
     <div className="space-y-6">
       <div>
-        <Link
-          href="/admin/users"
-          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:underline"
-        >
-          <ArrowLeft className="h-3 w-3" /> Voltar para usuários
-        </Link>
+        <Breadcrumbs
+          items={[
+            { label: "Usuários", href: "/admin/users" },
+            { label: user.name },
+          ]}
+        />
         <div className="mt-2 flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">

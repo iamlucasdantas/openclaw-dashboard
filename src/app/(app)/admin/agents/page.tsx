@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Bot, Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { Button, PageHeader } from "@/components/form";
 import { StatusPill } from "@/components/status-pill";
+import { EmptyState } from "@/components/empty-state";
 import { effectiveStatus } from "@/lib/agent-status";
 
 export default async function AdminAgentsPage() {
@@ -70,14 +71,13 @@ export default async function AdminAgentsPage() {
               </tr>
             ))}
             {agents.length === 0 && (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="px-5 py-10 text-center text-sm text-muted-foreground"
-                >
-                  Nenhum agente cadastrado ainda.
-                </td>
-              </tr>
+              <EmptyState
+                colSpan={5}
+                icon={<Bot className="h-5 w-5" />}
+                title="Nenhum agente cadastrado"
+                description="Registre o primeiro agente e vincule a um cliente."
+                action={{ label: "Novo agente", href: "/admin/agents/new" }}
+              />
             )}
           </tbody>
         </table>
