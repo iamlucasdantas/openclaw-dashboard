@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Building2, Bot, Users } from "lucide-react";
+import { StatusPill } from "@/components/status-pill";
+import { effectiveStatus } from "@/lib/agent-status";
 
 export default async function AdminOverview() {
   const [tenants, agents, users, recentAgents] = await Promise.all([
@@ -71,7 +73,7 @@ export default async function AdminOverview() {
                 </td>
                 <td className="px-5 py-2.5">{a.tenant.name}</td>
                 <td className="px-5 py-2.5">
-                  <StatusPill status={a.status} />
+                  <StatusPill status={effectiveStatus(a)} />
                 </td>
                 <td className="px-5 py-2.5 text-muted-foreground">
                   {a.model ?? "—"}
@@ -85,24 +87,3 @@ export default async function AdminOverview() {
   );
 }
 
-function StatusPill({ status }: { status: string }) {
-  const ok = status === "online";
-  return (
-    <span
-      className={
-        "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium " +
-        (ok
-          ? "bg-emerald-50 text-emerald-700"
-          : "bg-muted text-muted-foreground")
-      }
-    >
-      <span
-        className={
-          "h-1.5 w-1.5 rounded-full " +
-          (ok ? "bg-emerald-500" : "bg-muted-foreground/60")
-        }
-      />
-      {status}
-    </span>
-  );
-}

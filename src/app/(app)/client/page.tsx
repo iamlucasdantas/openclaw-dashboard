@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Bot, Building2 } from "lucide-react";
+import { StatusPill } from "@/components/status-pill";
+import { effectiveStatus } from "@/lib/agent-status";
 
 export default async function ClientOverview() {
   const session = await auth();
@@ -90,16 +92,7 @@ export default async function ClientOverview() {
                     </div>
                   </td>
                   <td className="px-5 py-2.5">
-                    <span
-                      className={
-                        "rounded-full px-2 py-0.5 text-xs " +
-                        (a.status === "online"
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-muted text-muted-foreground")
-                      }
-                    >
-                      {a.status}
-                    </span>
+                    <StatusPill status={effectiveStatus(a)} />
                   </td>
                   <td className="px-5 py-2.5 text-muted-foreground">
                     {a.model ?? "—"}

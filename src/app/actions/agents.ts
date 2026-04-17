@@ -6,6 +6,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth-guards";
 import { audit } from "@/lib/audit";
+import { generateHeartbeatSecret } from "@/lib/agent-status";
 
 const agentIdRegex = /^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$/;
 
@@ -85,6 +86,7 @@ export async function createAgent(
         persona: parsed.data.persona || null,
         model: parsed.data.model || null,
         status: parsed.data.status,
+        heartbeatSecret: generateHeartbeatSecret(),
       },
     });
   } catch (e: any) {
@@ -184,6 +186,28 @@ export async function updateAgent(
   revalidatePath("/admin/agents");
   revalidatePath("/client/agents");
   redirectAfter(scope, parsed.data.agentId);
+}
+
+export async function rotateAgentSecret(id: string, scope: Scope = "admin") {
+  const session = await requireSession();
+  const existing = await prisma.agent.findUnique({ where: { id } });
+  if (!existing) throw new Error("Agente não encontrado.");
+  if (!canWriteTenant(session, existing.tenantId)) {
+    throw new Error("Acesso negado.");
+  }
+
+  const secret = generateHeartbeatSecret();
+  await prisma.agent.update({ where: { id }, data: { heartbeatSecret: secret } });
+
+  await audit({
+    action: "agent.rotate_secret",
+    entityType: "agent",
+    entityId: id,
+    meta: { scope, agentId: existing.agentId },
+  });
+
+  revalidatePath(`/admin/agents/${existing.agentId}`);
+  revalidatePath(`/client/agents/${existing.agentId}`);
 }
 
 export async function deleteAgent(id: string, scope: Scope = "admin") {

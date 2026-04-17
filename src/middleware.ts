@@ -13,6 +13,7 @@ export default auth((req) => {
     path === "/login" ||
     path.startsWith("/invite/") ||
     path.startsWith("/api/auth") ||
+    path.startsWith("/api/agents/") ||
     path.startsWith("/_next");
 
   if (!isAuthed && !isPublic) {

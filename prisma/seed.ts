@@ -1,7 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { randomBytes } from "node:crypto";
 
 const prisma = new PrismaClient();
+
+function secret() {
+  return "ocs_" + randomBytes(24).toString("base64url");
+}
 
 async function main() {
   console.log("🌱  Seeding OpenClaw Dashboard...");
@@ -95,7 +100,19 @@ async function main() {
     await prisma.agent.upsert({
       where: { agentId: a.agentId },
       update: a,
-      create: a,
+      create: { ...a, heartbeatSecret: secret() },
+    });
+  }
+
+  // Backfill: qualquer agente sem heartbeatSecret recebe um novo
+  const missing = await prisma.agent.findMany({
+    where: { heartbeatSecret: null },
+    select: { id: true },
+  });
+  for (const a of missing) {
+    await prisma.agent.update({
+      where: { id: a.id },
+      data: { heartbeatSecret: secret() },
     });
   }
 

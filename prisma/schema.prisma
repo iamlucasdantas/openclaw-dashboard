@@ -68,15 +68,18 @@ model Membership {
 }
 
 model Agent {
-  id          String   @id @default(cuid())
-  agentId     String   @unique
-  name        String
-  tenantId    String
-  persona     String?
-  status      String   @default("offline")
-  model       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String    @id @default(cuid())
+  agentId         String    @unique
+  name            String
+  tenantId        String
+  persona         String?
+  status          String    @default("offline")
+  model           String?
+  lastHeartbeatAt DateTime?
+  lastVersion     String?
+  heartbeatSecret String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }

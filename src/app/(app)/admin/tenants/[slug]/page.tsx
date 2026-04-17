@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/form";
 import { DeleteButton } from "@/components/delete-button";
+import { StatusPill } from "@/components/status-pill";
+import { effectiveStatus } from "@/lib/agent-status";
 import { deleteTenant } from "@/app/actions/tenants";
 
 export default async function TenantDetailPage({
@@ -109,7 +111,7 @@ export default async function TenantDetailPage({
                   </code>
                 </td>
                 <td className="px-5 py-2.5">
-                  <StatusPill status={a.status} />
+                  <StatusPill status={effectiveStatus(a)} />
                 </td>
                 <td className="px-5 py-2.5 text-muted-foreground">
                   {a.model ?? "—"}
@@ -191,24 +193,3 @@ export default async function TenantDetailPage({
   );
 }
 
-function StatusPill({ status }: { status: string }) {
-  const ok = status === "online";
-  return (
-    <span
-      className={
-        "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium " +
-        (ok
-          ? "bg-emerald-50 text-emerald-700"
-          : "bg-muted text-muted-foreground")
-      }
-    >
-      <span
-        className={
-          "h-1.5 w-1.5 rounded-full " +
-          (ok ? "bg-emerald-500" : "bg-muted-foreground/60")
-        }
-      />
-      {status}
-    </span>
-  );
-}

@@ -4,8 +4,11 @@ import { ArrowLeft, Pencil } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
+import { effectiveStatus } from "@/lib/agent-status";
 import { Button } from "@/components/form";
 import { DeleteButton } from "@/components/delete-button";
+import { StatusPill } from "@/components/status-pill";
+import { HeartbeatIntegration } from "@/components/heartbeat-integration";
 import { deleteAgent } from "@/app/actions/agents";
 
 export default async function ClientAgentDetailPage({
@@ -23,15 +26,14 @@ export default async function ClientAgentDetailPage({
     include: { tenant: true },
   });
   if (!agent) notFound();
-
-  if (!tenantIds.includes(agent.tenantId)) {
-    notFound();
-  }
+  if (!tenantIds.includes(agent.tenantId)) notFound();
 
   const deleteThisAgent = async () => {
     "use server";
     await deleteAgent(agent.id, "client");
   };
+
+  const eff = effectiveStatus(agent);
 
   return (
     <div className="space-y-6">
@@ -70,11 +72,18 @@ export default async function ClientAgentDetailPage({
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card label="Status" value={agent.status} />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-lg border bg-card p-4">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">
+            Status
+          </div>
+          <div className="mt-2">
+            <StatusPill status={eff} />
+          </div>
+        </div>
         <Card label="Modelo" value={agent.model ?? "—"} />
         <Card label="Criado em" value={formatDate(agent.createdAt)} />
-        <Card label="Atualizado em" value={formatDate(agent.updatedAt)} />
+        <Card label="Último heartbeat" value={formatDate(agent.lastHeartbeatAt)} />
       </div>
 
       {agent.persona ? (
@@ -85,6 +94,8 @@ export default async function ClientAgentDetailPage({
           <div className="px-5 py-4 text-sm">{agent.persona}</div>
         </section>
       ) : null}
+
+      <HeartbeatIntegration agent={agent} scope="client" />
     </div>
   );
 }

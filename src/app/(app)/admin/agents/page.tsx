@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { Button, PageHeader } from "@/components/form";
+import { StatusPill } from "@/components/status-pill";
+import { effectiveStatus } from "@/lib/agent-status";
 
 export default async function AdminAgentsPage() {
   const agents = await prisma.agent.findMany({
@@ -13,7 +15,7 @@ export default async function AdminAgentsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Agentes"
-        description="Todos os agentes registrados, agrupáveis por cliente."
+        description="Todos os agentes registrados. Status exibido é o efetivo (heartbeat + manual)."
         actions={
           <Link href="/admin/agents/new">
             <Button>
@@ -60,16 +62,7 @@ export default async function AdminAgentsPage() {
                   </code>
                 </td>
                 <td className="px-5 py-3">
-                  <span
-                    className={
-                      "rounded-full px-2 py-0.5 text-xs " +
-                      (a.status === "online"
-                        ? "bg-emerald-50 text-emerald-700"
-                        : "bg-muted text-muted-foreground")
-                    }
-                  >
-                    {a.status}
-                  </span>
+                  <StatusPill status={effectiveStatus(a)} />
                 </td>
                 <td className="px-5 py-3 text-muted-foreground">
                   {a.model ?? "—"}

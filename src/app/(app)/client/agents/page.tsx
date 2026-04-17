@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Button, PageHeader } from "@/components/form";
+import { StatusPill } from "@/components/status-pill";
+import { effectiveStatus } from "@/lib/agent-status";
 
 export default async function ClientAgentsPage() {
   const session = await auth();
@@ -65,16 +67,7 @@ export default async function ClientAgentsPage() {
                   </code>
                 </td>
                 <td className="px-5 py-3">
-                  <span
-                    className={
-                      "rounded-full px-2 py-0.5 text-xs " +
-                      (a.status === "online"
-                        ? "bg-emerald-50 text-emerald-700"
-                        : "bg-muted text-muted-foreground")
-                    }
-                  >
-                    {a.status}
-                  </span>
+                  <StatusPill status={effectiveStatus(a)} />
                 </td>
                 <td className="px-5 py-3 text-muted-foreground">
                   {a.model ?? "—"}
