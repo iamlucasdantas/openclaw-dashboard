@@ -116,10 +116,55 @@ async function main() {
     });
   }
 
+  // Custos fake: 30 dias de uso por agente, volume e perfil por agente.
+  const existingEvents = await prisma.usageEvent.count();
+  if (existingEvents === 0) {
+    const allAgents = await prisma.agent.findMany();
+    const MODEL_RATES: Record<string, { in: number; out: number }> = {
+      "claude-opus-4-7": { in: 15 / 1e6, out: 75 / 1e6 },
+      "claude-sonnet-4-6": { in: 3 / 1e6, out: 15 / 1e6 },
+      "claude-haiku-4-5-20251001": { in: 1 / 1e6, out: 5 / 1e6 },
+    };
+
+    const bulk: any[] = [];
+    for (const a of allAgents) {
+      const model = a.model && MODEL_RATES[a.model] ? a.model : "claude-sonnet-4-6";
+      const rate = MODEL_RATES[model];
+      // perfil: "ops" + "opus" → mais caro; suporte → alto volume; vendas → médio
+      const base = a.agentId.includes("ops") ? 6 : a.agentId.includes("support") ? 40 : 15;
+      for (let d = 29; d >= 0; d--) {
+        const day = new Date();
+        day.setHours(12, 0, 0, 0);
+        day.setDate(day.getDate() - d);
+        const calls = Math.round(base * (0.6 + Math.random() * 0.8));
+        for (let i = 0; i < calls; i++) {
+          const inputTokens = 400 + Math.floor(Math.random() * 2000);
+          const outputTokens = 80 + Math.floor(Math.random() * 800);
+          const costUsd = inputTokens * rate.in + outputTokens * rate.out;
+          const occurredAt = new Date(day);
+          occurredAt.setMinutes(Math.floor(Math.random() * 60 * 14));
+          bulk.push({
+            agentId: a.id,
+            model,
+            inputTokens,
+            outputTokens,
+            costUsd,
+            occurredAt,
+          });
+        }
+      }
+    }
+    if (bulk.length > 0) {
+      await prisma.usageEvent.createMany({ data: bulk });
+    }
+    console.log(`   • UsageEvents seeded: ${bulk.length}`);
+  }
+
   console.log("✅  Seed concluído:");
   console.log(`   • Tenants: ${await prisma.tenant.count()}`);
   console.log(`   • Users:   ${await prisma.user.count()}`);
   console.log(`   • Agents:  ${await prisma.agent.count()}`);
+  console.log(`   • Events:  ${await prisma.usageEvent.count()}`);
   console.log("");
   console.log("   Login: lucas.odantas@gmail.com  /  senha: changeme");
 }

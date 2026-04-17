@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   Building2,
   Bot,
+  DollarSign,
   History,
   LayoutDashboard,
   Mail,
@@ -16,6 +17,7 @@ export function Sidebar({ activeRole }: { activeRole: ActiveRole }) {
     { href: "/admin", label: "Visão geral", icon: LayoutDashboard },
     { href: "/admin/tenants", label: "Clientes", icon: Building2 },
     { href: "/admin/agents", label: "Agentes", icon: Bot },
+    { href: "/admin/costs", label: "Custos", icon: DollarSign },
     { href: "/admin/users", label: "Usuários", icon: Users },
     { href: "/admin/invites", label: "Convites", icon: Mail },
     { href: "/admin/audit", label: "Auditoria", icon: History },
@@ -24,6 +26,7 @@ export function Sidebar({ activeRole }: { activeRole: ActiveRole }) {
   const clientNav = [
     { href: "/client", label: "Visão geral", icon: LayoutDashboard },
     { href: "/client/agents", label: "Meus agentes", icon: Bot },
+    { href: "/client/costs", label: "Custos", icon: DollarSign },
     { href: "/client/profile", label: "Meu perfil", icon: UserCog },
   ];
 

@@ -81,7 +81,26 @@ model Agent {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  usageEvents UsageEvent[]
+}
+
+// Evento append-only de uso de LLM. Cada chamada do agente pode gerar
+// um ou mais events. Usado para agregações no painel de custos.
+model UsageEvent {
+  id           String   @id @default(cuid())
+  agentId      String
+  model        String
+  inputTokens  Int
+  outputTokens Int
+  costUsd      Float
+  occurredAt   DateTime
+  createdAt    DateTime @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([occurredAt])
+  @@index([agentId, occurredAt])
 }
 
 // Log de todas as alterações significativas feitas via painel.
