@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { Clock, Pause, Play, Trash2 } from "lucide-react";
+import { CalendarDays, Clock, Pause, Play, Trash2 } from "lucide-react";
 import {
   createCron,
   deleteCron,
@@ -11,6 +11,7 @@ import {
 } from "@/app/actions/crons";
 import { Button, Field, FormError, Input, Select, Textarea } from "@/components/form";
 import { formatDate } from "@/lib/utils";
+import { formatClock, formatDayLabel, humanizeSchedule, nextRunsFor } from "@/lib/schedule";
 
 type CronRow = {
   id: string;
@@ -23,6 +24,16 @@ type CronRow = {
   lastRunMessage: string | null;
   nextRunAt: Date | null;
 };
+
+const PRESETS: { label: string; value: string; description: string }[] = [
+  { label: "A cada 15 minutos", value: "*/15 * * * *", description: "Rápido, para tarefas leves." },
+  { label: "A cada 30 minutos", value: "*/30 * * * *", description: "Checagens recorrentes." },
+  { label: "A cada hora", value: "@hourly", description: "Um batimento por hora." },
+  { label: "Todo dia às 9h", value: "0 9 * * *", description: "Rotina matinal." },
+  { label: "Todo dia à meia-noite", value: "@daily", description: "Resumo diário." },
+  { label: "Segunda às 8h", value: "0 8 * * 1", description: "Relatório semanal." },
+  { label: "Primeiro dia do mês", value: "@monthly", description: "Faturamento / limpeza mensal." },
+];
 
 function Submit({ label }: { label: string }) {
   const { pending } = useFormStatus();
@@ -49,10 +60,11 @@ export function CronsManager({
     <section className="rounded-lg border bg-card">
       <div className="border-b px-5 py-3">
         <h2 className="flex items-center gap-2 text-sm font-semibold">
-          <Clock className="h-4 w-4" /> Crons
+          <CalendarDays className="h-4 w-4" /> Tarefas agendadas
         </h2>
         <p className="text-xs text-muted-foreground">
-          Tarefas agendadas do agente. Pausa = agent para rodar sem excluir.
+          Cada tarefa é uma rotina que o agente executa sozinho em horários
+          definidos. Você pode pausar ou excluir a qualquer momento.
         </p>
       </div>
 
@@ -62,7 +74,7 @@ export function CronsManager({
         ))}
         {crons.length === 0 && (
           <li className="px-5 py-6 text-center text-xs text-muted-foreground">
-            Nenhum cron cadastrado ainda.
+            Nenhuma tarefa agendada ainda.
           </li>
         )}
       </ul>
@@ -71,34 +83,28 @@ export function CronsManager({
         <input type="hidden" name="agentDbId" value={agentDbId} />
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Nome" error={state.fieldErrors?.name}>
-            <Input name="name" required placeholder="Revisar PRs abertos" />
+            <Input name="name" required placeholder="Ex: Revisar PRs" />
           </Field>
-          <Field
-            label="Agenda"
-            hint="Cron 5 campos ou @hourly / @daily / @weekly / @monthly."
-            error={state.fieldErrors?.schedule}
-          >
-            <Input name="schedule" required placeholder="*/30 * * * *" />
-          </Field>
+          <PresetSchedulePicker error={state.fieldErrors?.schedule} />
         </div>
-        <Field label="Comando / prompt" error={state.fieldErrors?.command}>
+        <Field label="O que o agente deve fazer" error={state.fieldErrors?.command}>
           <Textarea
             name="command"
             rows={2}
             required
-            placeholder="skill:github-ops review-open-prs"
+            placeholder='Ex: "Revisar PRs abertos e me avisar"'
           />
         </Field>
         <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-          <Field label="Estado inicial" error={state.fieldErrors?.state}>
+          <Field label="Começa como..." error={state.fieldErrors?.state}>
             <Select name="state" defaultValue="active">
-              <option value="active">ativo</option>
-              <option value="paused">pausado</option>
-              <option value="disabled">desabilitado</option>
+              <option value="active">Ativa (já começa a rodar)</option>
+              <option value="paused">Pausada (criar sem rodar)</option>
+              <option value="disabled">Desabilitada</option>
             </Select>
           </Field>
           <div className="flex items-end">
-            <Submit label="Adicionar cron" />
+            <Submit label="Adicionar tarefa" />
           </div>
         </div>
         <FormError message={state.error} />
@@ -107,16 +113,57 @@ export function CronsManager({
   );
 }
 
+function PresetSchedulePicker({ error }: { error?: string }) {
+  return (
+    <Field
+      label="Quando executar"
+      hint="Escolha um preset ou digite um cron de 5 campos."
+      error={error}
+    >
+      <div className="space-y-2">
+        <Input
+          name="schedule"
+          id="schedule-input"
+          required
+          placeholder="0 9 * * *"
+          defaultValue=""
+        />
+        <div className="flex flex-wrap gap-1">
+          {PRESETS.map((p) => (
+            <button
+              key={p.value}
+              type="button"
+              title={p.description}
+              onClick={(e) => {
+                const input = document.getElementById(
+                  "schedule-input"
+                ) as HTMLInputElement | null;
+                if (input) {
+                  input.value = p.value;
+                  input.focus();
+                }
+                e.preventDefault();
+              }}
+              className="rounded-full border bg-background px-2 py-0.5 text-[11px] text-muted-foreground transition hover:bg-accent hover:text-accent-foreground"
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </Field>
+  );
+}
+
 function CronRowItem({ row }: { row: CronRow }) {
   const [pending, startTransition] = useTransition();
+  const upcoming = row.state === "active" ? nextRunsFor(row.schedule, 3) : [];
+
   return (
     <li className="flex items-start justify-between gap-3 px-5 py-3">
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium">{row.name}</span>
-          <code className="rounded bg-muted px-1.5 py-0.5 text-[11px]">
-            {row.schedule}
-          </code>
           <StateBadge state={row.state} />
           {row.lastRunStatus ? (
             <span
@@ -131,13 +178,32 @@ function CronRowItem({ row }: { row: CronRow }) {
             </span>
           ) : null}
         </div>
+        <div className="mt-0.5 text-xs">
+          <span className="text-foreground">{humanizeSchedule(row.schedule)}</span>
+          <code className="ml-2 text-[10px] text-muted-foreground">
+            {row.schedule}
+          </code>
+        </div>
         <div className="mt-1 text-xs text-muted-foreground break-words">
-          <code>{row.command}</code>
+          {row.command}
         </div>
-        <div className="mt-0.5 text-[11px] text-muted-foreground">
-          última exec: {formatDate(row.lastRunAt)} · próxima:{" "}
-          {formatDate(row.nextRunAt)}
+        <div className="mt-1 text-[11px] text-muted-foreground">
+          última execução: {formatDate(row.lastRunAt)}
         </div>
+        {upcoming.length > 0 ? (
+          <div className="mt-2 flex flex-wrap items-center gap-1 text-[11px]">
+            <span className="text-muted-foreground">Próximas:</span>
+            {upcoming.map((d, i) => (
+              <span
+                key={i}
+                className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 tabular-nums"
+              >
+                <Clock className="h-3 w-3" />
+                {formatDayLabel(d)} · {formatClock(d)}
+              </span>
+            ))}
+          </div>
+        ) : null}
       </div>
       <div className="flex shrink-0 items-center gap-1">
         <Button
@@ -163,7 +229,7 @@ function CronRowItem({ row }: { row: CronRow }) {
           variant="ghost"
           disabled={pending}
           onClick={() => {
-            if (!confirm(`Excluir cron "${row.name}"?`)) return;
+            if (!confirm(`Excluir tarefa "${row.name}"?`)) return;
             startTransition(() => {
               void deleteCron(row.id);
             });
@@ -183,9 +249,14 @@ function StateBadge({ state }: { state: string }) {
     paused: "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
     disabled: "bg-muted text-muted-foreground",
   };
+  const labels: Record<string, string> = {
+    active: "ativa",
+    paused: "pausada",
+    disabled: "desabilitada",
+  };
   return (
     <span className={`rounded-full px-2 py-0.5 text-[11px] ${styles[state] ?? ""}`}>
-      {state}
+      {labels[state] ?? state}
     </span>
   );
 }

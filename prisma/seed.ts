@@ -360,6 +360,88 @@ async function main() {
     state: "active",
   });
 
+  // Histórico de atividades de skills (amostra legível)
+  const existingActivities = await prisma.skillActivity.count();
+  if (existingActivities === 0) {
+    const installs = await prisma.agentSkill.findMany({
+      include: { skill: true, agent: true },
+    });
+
+    const samples: Record<string, string[]> = {
+      gmail: [
+        "Respondeu email de {from}",
+        "Enviou atualização para cliente {client}",
+        "Marcou {n} mensagens como lidas",
+      ],
+      "google-calendar": [
+        "Criou evento 'Reunião de alinhamento'",
+        "Aceitou convite de {from}",
+        "Moveu compromisso para {day}",
+      ],
+      "github-ops": [
+        "Revisou PR #{n} em {repo}",
+        "Abriu issue 'Falha no workflow X'",
+        "Comentou em PR #{n}",
+      ],
+      "slack-inbound": [
+        "Respondeu menção em #{channel}",
+        "Processou mensagem direta de @{user}",
+      ],
+      "whatsapp-cloud": [
+        "Respondeu cliente {client} no WhatsApp",
+        "Encaminhou chamado para time humano",
+      ],
+      "ci-alerts": [
+        "Detectou falha no workflow {workflow}",
+        "Abriu issue automática por CI",
+      ],
+      "react-loop": [
+        "Resolveu tarefa em {n} etapas",
+        "Chamou ferramenta {tool}",
+      ],
+      "memory-kv": [
+        "Salvou preferência do usuário",
+        "Recuperou contexto da sessão anterior",
+      ],
+    };
+
+    const statusPool = ["ok", "ok", "ok", "ok", "ok", "warning", "error"];
+    const bulk: any[] = [];
+    for (const install of installs) {
+      const list = samples[install.skill.slug] ?? ["Executou ação"];
+      const count = 8 + Math.floor(Math.random() * 20);
+      for (let i = 0; i < count; i++) {
+        const template = list[Math.floor(Math.random() * list.length)];
+        const summary = template
+          .replace("{n}", String(1 + Math.floor(Math.random() * 400)))
+          .replace("{from}", ["Ana", "Carlos", "Bruno", "Marina"][Math.floor(Math.random() * 4)])
+          .replace("{client}", ["@acme", "@initech", "@beta", "@gama"][Math.floor(Math.random() * 4)])
+          .replace("{repo}", "iamlucasdantas/openclaw-dashboard")
+          .replace("{day}", ["segunda", "terça", "quarta"][Math.floor(Math.random() * 3)])
+          .replace("{channel}", ["dev", "suporte", "geral"][Math.floor(Math.random() * 3)])
+          .replace("{user}", ["ana", "carlos", "marina"][Math.floor(Math.random() * 3)])
+          .replace("{workflow}", ["ci.yml", "deploy.yml", "lint.yml"][Math.floor(Math.random() * 3)])
+          .replace("{tool}", ["search", "sql", "github", "calendar"][Math.floor(Math.random() * 4)]);
+        const status = statusPool[Math.floor(Math.random() * statusPool.length)];
+        const daysAgo = Math.floor(Math.random() * 14);
+        const occurredAt = new Date();
+        occurredAt.setHours(8 + Math.floor(Math.random() * 14));
+        occurredAt.setMinutes(Math.floor(Math.random() * 60));
+        occurredAt.setDate(occurredAt.getDate() - daysAgo);
+        bulk.push({
+          agentSkillId: install.id,
+          summary,
+          status,
+          occurredAt,
+        });
+      }
+    }
+    if (bulk.length > 0) {
+      await prisma.skillActivity.createMany({ data: bulk });
+    }
+    console.log(`   • SkillActivities seeded: ${bulk.length}`);
+  }
+
   // Limites de custo
   const acmeTenant = await prisma.tenant.findUnique({ where: { slug: "acme" } });
   if (acmeTenant && acmeTenant.monthlyBudgetUsd == null) {

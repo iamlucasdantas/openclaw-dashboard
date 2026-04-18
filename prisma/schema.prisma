@@ -116,10 +116,28 @@ model AgentSkill {
   config    String?  // JSON stringified
   createdAt DateTime @default(now())
 
-  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  agent      Agent            @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  skill      Skill            @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  activities SkillActivity[]
 
   @@unique([agentId, skillId])
+}
+
+// Atividade registrada por uma skill instalada — usado para histórico
+// legível por cliente ("enviou email", "abriu PR", "respondeu atendimento").
+model SkillActivity {
+  id            String   @id @default(cuid())
+  agentSkillId  String
+  summary       String
+  detail        String?
+  status        String   @default("ok") // ok | error | warning
+  occurredAt    DateTime
+  createdAt     DateTime @default(now())
+
+  agentSkill AgentSkill @relation(fields: [agentSkillId], references: [id], onDelete: Cascade)
+
+  @@index([occurredAt])
+  @@index([agentSkillId, occurredAt])
 }
 
 // Cron / tarefa agendada por agente.
