@@ -29,7 +29,7 @@ export default async function AppLayout({
           availableRoles={roles}
           theme={theme}
         />
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-4 md:p-6">{children}</main>
       </div>
     </div>
   );
