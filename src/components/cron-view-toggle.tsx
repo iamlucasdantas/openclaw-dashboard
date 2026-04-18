@@ -1,27 +1,27 @@
 "use client";
 
 import { useTransition } from "react";
-import { CalendarDays, List } from "lucide-react";
-import { setCronView } from "@/app/actions/view-mode";
+import { CalendarDays, CalendarRange, List } from "lucide-react";
+import { setCronView, type CronView } from "@/app/actions/view-mode";
 import { cn } from "@/lib/utils";
 
 export function CronViewToggle({
   current,
   pathname,
 }: {
-  current: "agenda" | "list";
+  current: CronView;
   pathname: string;
 }) {
   const [pending, startTransition] = useTransition();
 
-  function switchTo(m: "agenda" | "list") {
+  function switchTo(m: CronView) {
     if (m === current || pending) return;
     startTransition(() => {
       void setCronView(m, pathname);
     });
   }
 
-  const btn = (mode: "agenda" | "list", label: string, Icon: any) => (
+  const btn = (mode: CronView, label: string, Icon: any) => (
     <button
       type="button"
       disabled={pending}
@@ -35,12 +35,13 @@ export function CronViewToggle({
       )}
     >
       <Icon className="h-3.5 w-3.5" />
-      {label}
+      <span className="hidden sm:inline">{label}</span>
     </button>
   );
 
   return (
     <div className="inline-flex items-center rounded-md border bg-background p-0.5 shadow-sm">
+      {btn("calendar", "Calendário", CalendarRange)}
       {btn("agenda", "Agenda", CalendarDays)}
       {btn("list", "Lista", List)}
     </div>

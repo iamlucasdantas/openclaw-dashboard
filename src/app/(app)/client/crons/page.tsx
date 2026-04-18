@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Clock } from "lucide-react";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/form";
 import { EmptyState } from "@/components/empty-state";
@@ -10,11 +12,16 @@ import { CronsCalendar } from "@/components/crons-calendar";
 import { CronViewToggle } from "@/components/cron-view-toggle";
 import { getCronView } from "@/app/actions/view-mode";
 
-export default async function AdminCronsPage() {
+export default async function ClientCronsPage() {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+
+  const tenantIds = session.user.tenantIds ?? [];
   const [crons, view] = await Promise.all([
     prisma.agentCron.findMany({
+      where: { agent: { tenantId: { in: tenantIds } } },
       include: { agent: { include: { tenant: true } } },
-      orderBy: [{ agent: { tenant: { name: "asc" } } }, { name: "asc" }],
+      orderBy: [{ agent: { name: "asc" } }, { name: "asc" }],
     }),
     getCronView(),
   ]);
@@ -30,28 +37,19 @@ export default async function AdminCronsPage() {
       <PageHeader
         title="Tarefas agendadas"
         description={`${counts.active} ativa(s) · ${counts.paused} pausada(s) · ${counts.disabled} desabilitada(s).`}
-        actions={
-          <CronViewToggle current={view} pathname="/admin/crons" />
-        }
+        actions={<CronViewToggle current={view} pathname="/client/crons" />}
       />
 
       {crons.length === 0 ? (
-        <div className="rounded-lg border bg-card">
-          <table className="w-full">
-            <tbody>
-              <EmptyState
-                colSpan={1}
-                icon={<Clock className="h-5 w-5" />}
-                title="Nenhuma tarefa agendada"
-                description="As tarefas são criadas dentro da página de cada agente."
-                action={{ label: "Ver agentes", href: "/admin/agents" }}
-              />
-            </tbody>
-          </table>
-        </div>
+        <EmptyState
+          icon={<Clock className="h-5 w-5" />}
+          title="Nenhuma tarefa agendada"
+          description="Crie tarefas dentro da página de cada agente."
+          action={{ label: "Ver meus agentes", href: "/client/agents" }}
+        />
       ) : view === "calendar" ? (
         <CronsCalendar
-          scopeLinks={{ agentHrefPrefix: "/admin/agents" }}
+          scopeLinks={{ agentHrefPrefix: "/client/agents" }}
           crons={crons.map((c) => ({
             id: c.id,
             name: c.name,
@@ -62,7 +60,7 @@ export default async function AdminCronsPage() {
         />
       ) : view === "agenda" ? (
         <CronsAgenda
-          scopeLinks={{ agentHrefPrefix: "/admin/agents" }}
+          scopeLinks={{ agentHrefPrefix: "/client/agents" }}
           crons={crons.map((c) => ({
             id: c.id,
             name: c.name,
@@ -81,7 +79,6 @@ export default async function AdminCronsPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
-                <th className="px-5 py-2.5 text-left">Cliente</th>
                 <th className="px-5 py-2.5 text-left">Agente</th>
                 <th className="px-5 py-2.5 text-left">Tarefa</th>
                 <th className="px-5 py-2.5 text-left">Quando</th>
@@ -92,17 +89,9 @@ export default async function AdminCronsPage() {
             <tbody>
               {crons.map((c) => (
                 <tr key={c.id} className="border-t">
-                  <td className="px-5 py-3">
-                    <Link
-                      href={`/admin/tenants/${c.agent.tenant.slug}`}
-                      className="hover:underline"
-                    >
-                      {c.agent.tenant.name}
-                    </Link>
-                  </td>
                   <td className="px-5 py-3 font-medium">
                     <Link
-                      href={`/admin/agents/${c.agent.agentId}`}
+                      href={`/client/agents/${c.agent.agentId}`}
                       className="hover:underline"
                     >
                       {c.agent.name}
@@ -111,25 +100,15 @@ export default async function AdminCronsPage() {
                   <td className="px-5 py-3">
                     {c.name}
                     <div className="text-[11px] text-muted-foreground">
-                      <code>{c.command}</code>
+                      {c.command}
                     </div>
                   </td>
                   <td className="px-5 py-3">
-                    <div className="text-sm">
-                      {humanizeSchedule(c.schedule)}
-                    </div>
-                    <code className="text-[10px] text-muted-foreground">
-                      {c.schedule}
-                    </code>
+                    <div className="text-sm">{humanizeSchedule(c.schedule)}</div>
                   </td>
-                  <td className="px-5 py-3">
-                    <StateBadge state={c.state} />
-                  </td>
+                  <td className="px-5 py-3 text-xs">{c.state}</td>
                   <td className="px-5 py-3 text-xs text-muted-foreground">
                     {formatDate(c.lastRunAt)}
-                    {c.lastRunStatus ? (
-                      <div className="mt-0.5">status: {c.lastRunStatus}</div>
-                    ) : null}
                   </td>
                 </tr>
               ))}
@@ -138,23 +117,5 @@ export default async function AdminCronsPage() {
         </div>
       )}
     </div>
-  );
-}
-
-function StateBadge({ state }: { state: string }) {
-  const styles: Record<string, string> = {
-    active: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
-    paused: "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
-    disabled: "bg-muted text-muted-foreground",
-  };
-  const labels: Record<string, string> = {
-    active: "ativa",
-    paused: "pausada",
-    disabled: "desabilitada",
-  };
-  return (
-    <span className={`rounded-full px-2 py-0.5 text-xs ${styles[state] ?? ""}`}>
-      {labels[state] ?? state}
-    </span>
   );
 }

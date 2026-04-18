@@ -43,6 +43,7 @@ export function NavLinks({
   const clientNav = [
     { href: "/client", label: "Visão geral", icon: LayoutDashboard },
     { href: "/client/agents", label: "Meus agentes", icon: Bot },
+    { href: "/client/crons", label: "Agendamentos", icon: CalendarDays },
     { href: "/client/costs", label: "Custos", icon: DollarSign },
     { href: "/client/profile", label: "Meu perfil", icon: UserCog },
   ];

@@ -10,6 +10,7 @@ import {
   type CronFormState,
 } from "@/app/actions/crons";
 import { Button, Field, FormError, Input, Select, Textarea } from "@/components/form";
+import { SchedulePicker } from "@/components/schedule-picker";
 import { formatDate } from "@/lib/utils";
 import { formatClock, formatDayLabel, humanizeSchedule, nextRunsFor } from "@/lib/schedule";
 
@@ -24,16 +25,6 @@ type CronRow = {
   lastRunMessage: string | null;
   nextRunAt: Date | null;
 };
-
-const PRESETS: { label: string; value: string; description: string }[] = [
-  { label: "A cada 15 minutos", value: "*/15 * * * *", description: "Rápido, para tarefas leves." },
-  { label: "A cada 30 minutos", value: "*/30 * * * *", description: "Checagens recorrentes." },
-  { label: "A cada hora", value: "@hourly", description: "Um batimento por hora." },
-  { label: "Todo dia às 9h", value: "0 9 * * *", description: "Rotina matinal." },
-  { label: "Todo dia à meia-noite", value: "@daily", description: "Resumo diário." },
-  { label: "Segunda às 8h", value: "0 8 * * 1", description: "Relatório semanal." },
-  { label: "Primeiro dia do mês", value: "@monthly", description: "Faturamento / limpeza mensal." },
-];
 
 function Submit({ label }: { label: string }) {
   const { pending } = useFormStatus();
@@ -79,14 +70,13 @@ export function CronsManager({
         )}
       </ul>
 
-      <form action={formAction} className="space-y-3 border-t p-4">
+      <form action={formAction} className="space-y-4 border-t p-4">
         <input type="hidden" name="agentDbId" value={agentDbId} />
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Nome" error={state.fieldErrors?.name}>
-            <Input name="name" required placeholder="Ex: Revisar PRs" />
-          </Field>
-          <PresetSchedulePicker error={state.fieldErrors?.schedule} />
-        </div>
+
+        <Field label="Nome" error={state.fieldErrors?.name}>
+          <Input name="name" required placeholder="Ex: Revisar PRs abertos" />
+        </Field>
+
         <Field label="O que o agente deve fazer" error={state.fieldErrors?.command}>
           <Textarea
             name="command"
@@ -95,6 +85,12 @@ export function CronsManager({
             placeholder='Ex: "Revisar PRs abertos e me avisar"'
           />
         </Field>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium">Quando executar</label>
+          <SchedulePicker name="schedule" error={state.fieldErrors?.schedule} />
+        </div>
+
         <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
           <Field label="Começa como..." error={state.fieldErrors?.state}>
             <Select name="state" defaultValue="active">
@@ -107,51 +103,10 @@ export function CronsManager({
             <Submit label="Adicionar tarefa" />
           </div>
         </div>
+
         <FormError message={state.error} />
       </form>
     </section>
-  );
-}
-
-function PresetSchedulePicker({ error }: { error?: string }) {
-  return (
-    <Field
-      label="Quando executar"
-      hint="Escolha um preset ou digite um cron de 5 campos."
-      error={error}
-    >
-      <div className="space-y-2">
-        <Input
-          name="schedule"
-          id="schedule-input"
-          required
-          placeholder="0 9 * * *"
-          defaultValue=""
-        />
-        <div className="flex flex-wrap gap-1">
-          {PRESETS.map((p) => (
-            <button
-              key={p.value}
-              type="button"
-              title={p.description}
-              onClick={(e) => {
-                const input = document.getElementById(
-                  "schedule-input"
-                ) as HTMLInputElement | null;
-                if (input) {
-                  input.value = p.value;
-                  input.focus();
-                }
-                e.preventDefault();
-              }}
-              className="rounded-full border bg-background px-2 py-0.5 text-[11px] text-muted-foreground transition hover:bg-accent hover:text-accent-foreground"
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-      </div>
-    </Field>
   );
 }
 
@@ -180,9 +135,6 @@ function CronRowItem({ row }: { row: CronRow }) {
         </div>
         <div className="mt-0.5 text-xs">
           <span className="text-foreground">{humanizeSchedule(row.schedule)}</span>
-          <code className="ml-2 text-[10px] text-muted-foreground">
-            {row.schedule}
-          </code>
         </div>
         <div className="mt-1 text-xs text-muted-foreground break-words">
           {row.command}

@@ -29,13 +29,20 @@ export default async function AgentDetailPage({
       include: {
         tenant: true,
         github: { include: { repos: { orderBy: [{ owner: "asc" }, { name: "asc" }] } } },
-        skills: { include: { skill: true }, orderBy: { createdAt: "asc" } },
+        skills: {
+          include: {
+            skill: true,
+            activities: { orderBy: { occurredAt: "desc" }, take: 1 },
+            _count: { select: { activities: true } },
+          },
+          orderBy: { createdAt: "asc" },
+        },
         crons: { orderBy: { createdAt: "asc" } },
       },
     }),
     prisma.skill.findMany({
       orderBy: [{ category: "asc" }, { name: "asc" }],
-      select: { id: true, slug: true, name: true, category: true },
+      select: { id: true, slug: true, name: true, category: true, description: true },
     }),
   ]);
   if (!agent) notFound();
@@ -166,7 +173,16 @@ export default async function AgentDetailPage({
             name: s.skill.name,
             category: s.skill.category,
             version: s.skill.version,
+            description: s.skill.description,
           },
+          lastActivity: s.activities[0]
+            ? {
+                summary: s.activities[0].summary,
+                occurredAt: s.activities[0].occurredAt,
+                status: s.activities[0].status,
+              }
+            : null,
+          activityCount: s._count.activities,
         }))}
         catalog={skillCatalog}
       />

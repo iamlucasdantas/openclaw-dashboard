@@ -3,7 +3,9 @@
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 
-export async function setCronView(mode: "agenda" | "list", currentPath: string) {
+export type CronView = "calendar" | "agenda" | "list";
+
+export async function setCronView(mode: CronView, currentPath: string) {
   const jar = await cookies();
   jar.set("openclaw_cron_view", mode, {
     path: "/",
@@ -14,8 +16,9 @@ export async function setCronView(mode: "agenda" | "list", currentPath: string) 
   revalidatePath(currentPath);
 }
 
-export async function getCronView(): Promise<"agenda" | "list"> {
+export async function getCronView(): Promise<CronView> {
   const jar = await cookies();
   const v = jar.get("openclaw_cron_view")?.value;
-  return v === "list" ? "list" : "agenda";
+  if (v === "agenda" || v === "list") return v;
+  return "calendar";
 }
