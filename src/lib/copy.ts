@@ -154,6 +154,95 @@ export const copy = {
     },
   },
 
+  // Home do cliente (Jobs-to-be-Done)
+  home: {
+    greeting: {
+      morning: "Bom dia, {name}.",
+      afternoon: "Boa tarde, {name}.",
+      evening: "Boa noite, {name}.",
+    },
+    headlineAllWorking: {
+      one: "Seu assistente está trabalhando normalmente.",
+      many: "Seus {count} assistentes estão trabalhando normalmente.",
+    },
+    headlineSomeAttention: {
+      one: "1 assistente precisa de atenção.",
+      many: "{count} assistentes precisam de atenção.",
+    },
+    headlineSomeStopped: {
+      one: "1 assistente não deu sinal de vida nos últimos minutos.",
+      many: "{count} assistentes não deram sinal de vida nos últimos minutos.",
+    },
+    headlineAdminBadge: "visão cliente",
+    sections: {
+      today: "Hoje, {date}",
+      todayEmpty: "Nenhuma atividade hoje. Seus assistentes estão descansando.",
+      todayAgentIdle: "Nenhuma tarefa agendada pra hoje",
+      upcomingTitle: "Próxima tarefa",
+      upcomingEmpty: "Nenhuma tarefa nos próximos 7 dias.",
+      upcomingLineWhen: "{day}, {time}",
+      budgetTitle: "Faturamento do mês",
+      budgetSpent: "{spent} gastos",
+      budgetOf: "de {budget}",
+      budgetProjection: "Previsto fechar em {value}",
+      budgetUnlimited: "Sem limite definido.",
+      budgetUnlimitedCta: "Definir limite",
+      budgetAlertWarn: "Você já usou {pct}% do seu limite.",
+      budgetAlertCritical: "Atenção: você passou do limite este mês.",
+      myAssistants: "Meus assistentes",
+      openAgent: "abrir →",
+      seeSchedule: "ver agenda →",
+      seeCosts: "ver detalhes →",
+      viewIssue: "ver",
+    },
+    assistantCard: {
+      tasksTodayZero: "0 tarefas hoje",
+      tasksTodayOne: "1 tarefa hoje",
+      tasksTodayMany: "{n} tarefas hoje",
+      skillsOne: "1 habilidade",
+      skillsMany: "{n} habilidades",
+    },
+    // Verbos humanizados por skill-slug pra transformar atividades em valor.
+    activityVerbs: {
+      gmail: {
+        one: "respondeu 1 email",
+        many: "respondeu {n} emails",
+      },
+      "google-calendar": {
+        one: "criou 1 evento",
+        many: "criou {n} eventos",
+      },
+      "github-ops": {
+        one: "revisou 1 PR",
+        many: "revisou {n} PRs",
+      },
+      "slack-inbound": {
+        one: "respondeu 1 menção no Slack",
+        many: "respondeu {n} menções no Slack",
+      },
+      "whatsapp-cloud": {
+        one: "respondeu 1 cliente no WhatsApp",
+        many: "respondeu {n} clientes no WhatsApp",
+      },
+      "ci-alerts": {
+        one: "detectou 1 alerta de CI",
+        many: "detectou {n} alertas de CI",
+      },
+      "react-loop": {
+        one: "concluiu 1 raciocínio complexo",
+        many: "concluiu {n} raciocínios complexos",
+      },
+      "memory-kv": {
+        one: "salvou 1 memória",
+        many: "salvou {n} memórias",
+      },
+      generic: {
+        one: "executou 1 ação",
+        many: "executou {n} ações",
+      },
+    },
+  },
+
   // Empty states
   empty: {
     home: {
