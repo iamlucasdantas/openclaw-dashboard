@@ -229,9 +229,22 @@ endpoints adicionais previstos mas ainda não implementados:
 - `POST /api/agents/:id/usage` — eventos de uso de LLM (tokens/custo real)
 - `POST /api/agents/:id/cron-run` — resultado de execução de cron
 - `POST /api/agents/:id/skill-activity` — atividade de skill ("enviou email X")
+  com suporte a anexar imagem (`contentUrl`) ou conteúdo longo (`body`)
 
 Hoje essas atividades aparecem no painel a partir de dados seedados.
 Quando precisar da ingestão real, me avisa.
+
+## 🗂️ Histórico e retenção de dados
+
+- **Skills – histórico de atividades**: cada entrada tem data/hora exata,
+  status (ok/aviso/erro), conteúdo (`body`), tipo (`text` / `image` / `link`)
+  e URL. No painel, clique em uma linha pra **expandir** e ver o conteúdo
+  completo — incluindo preview inline de imagens e links externos.
+- **Retenção: 30 dias.** Atividades mais antigas são removidas automaticamente
+  por uma rotina de limpeza throttled (executa no máximo 1× por hora, disparada
+  pelo próprio painel quando alguém abre a tela de uma skill).
+- **Auditoria e UsageEvents** não seguem essa retenção (audit: últimas 200
+  entradas; usage: ilimitado por ora). Pode ser ajustado depois se precisar.
 
 ## Estrutura
 

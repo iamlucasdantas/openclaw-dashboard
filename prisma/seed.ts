@@ -367,70 +367,206 @@ async function main() {
       include: { skill: true, agent: true },
     });
 
-    const samples: Record<string, string[]> = {
+    type Sample = {
+      summary: string;
+      body?: string;
+      contentType?: "text" | "image" | "link";
+      contentUrl?: string;
+    };
+
+    const samples: Record<string, Sample[]> = {
       gmail: [
-        "Respondeu email de {from}",
-        "Enviou atualização para cliente {client}",
-        "Marcou {n} mensagens como lidas",
+        {
+          summary: "Respondeu email de Ana Silva",
+          contentType: "text",
+          body:
+            "Oi Ana,\n\nObrigado pelo retorno! Agendei nossa próxima call para " +
+            "quinta-feira às 14h. Enviei o convite pelo Calendar.\n\n" +
+            "Qualquer coisa me avise.\n\n— Lucas",
+        },
+        {
+          summary: "Enviou atualização para cliente Acme",
+          contentType: "text",
+          body:
+            "Olá time Acme,\n\nStatus dos deploys desta semana:\n" +
+            "• app-web: v2.4.1 em produção ✓\n" +
+            "• worker: v1.8.0 em staging aguardando QA\n" +
+            "• dashboard: correções de UX na próxima release\n\n" +
+            "Abraço.",
+        },
+        {
+          summary: "Marcou 12 mensagens como lidas",
+          contentType: "text",
+          body: "Limpeza automática do inbox — 12 emails de newsletters e bounces.",
+        },
       ],
       "google-calendar": [
-        "Criou evento 'Reunião de alinhamento'",
-        "Aceitou convite de {from}",
-        "Moveu compromisso para {day}",
+        {
+          summary: "Criou evento 'Reunião de alinhamento'",
+          contentType: "text",
+          body:
+            "Evento criado:\n" +
+            "• Título: Reunião de alinhamento\n" +
+            "• Quando: Quarta, 14:00–15:00\n" +
+            "• Participantes: lucas@, ana@, carlos@\n" +
+            "• Link: Google Meet gerado",
+        },
+        {
+          summary: "Moveu compromisso 'Planning' para quinta às 16h",
+          contentType: "text",
+          body: "Remarcado de quarta 10h → quinta 16h. Notificação enviada para os 4 participantes.",
+        },
       ],
       "github-ops": [
-        "Revisou PR #{n} em {repo}",
-        "Abriu issue 'Falha no workflow X'",
-        "Comentou em PR #{n}",
+        {
+          summary: "Revisou PR #142 em openclaw-dashboard",
+          contentType: "link",
+          contentUrl: "https://github.com/iamlucasdantas/openclaw-dashboard/pull/142",
+          body:
+            "Aprovado com sugestões:\n" +
+            "✓ Lógica de heartbeat está correta\n" +
+            "✓ Isolamento por tenant verificado\n" +
+            "⚠ Falta tratamento de rate-limit na API pública\n" +
+            "⚠ Sugeriria adicionar teste para path 401",
+        },
+        {
+          summary: "Abriu issue 'Falha no workflow ci.yml'",
+          contentType: "link",
+          contentUrl: "https://github.com/iamlucasdantas/openclaw-dashboard/issues/77",
+          body:
+            "Detectei falha no último run do ci.yml:\n\n" +
+            "```\nError: Cannot find module 'zod' at ...\n```\n\n" +
+            "Parece que a instalação de dependências falhou em Node 18 na etapa de lint. Reproduzir local passo-a-passo...",
+        },
+        {
+          summary: "Comentou em PR #98",
+          contentType: "link",
+          contentUrl: "https://github.com/iamlucasdantas/openclaw-dashboard/pull/98",
+          body: "Checar se o schema de AuditLog comporta metadata extenso (JSON stringified pode ficar grande em SQLite).",
+        },
       ],
       "slack-inbound": [
-        "Respondeu menção em #{channel}",
-        "Processou mensagem direta de @{user}",
+        {
+          summary: "Respondeu menção em #suporte",
+          contentType: "text",
+          body:
+            "@carlos você pode tentar limpar o cache local com:\n\n" +
+            "`rm -rf .next && npm run dev`\n\n" +
+            "Se persistir, me chama em DM com o log do console.",
+        },
+        {
+          summary: "Processou mensagem direta de @marina",
+          contentType: "text",
+          body: "Marina pediu para gerar relatório de vendas do Q1. Encaminhei para o skill de exports.",
+        },
       ],
       "whatsapp-cloud": [
-        "Respondeu cliente {client} no WhatsApp",
-        "Encaminhou chamado para time humano",
+        {
+          summary: "Respondeu cliente @acme no WhatsApp",
+          contentType: "text",
+          body:
+            "Oi! Seu pedido #4521 foi despachado hoje de manhã. " +
+            "Código de rastreio: BR123456789BR. " +
+            "Prazo estimado: 2 dias úteis. Qualquer coisa, tô aqui. 👋",
+        },
+        {
+          summary: "Enviou imagem de confirmação de pagamento",
+          contentType: "image",
+          contentUrl: "https://picsum.photos/seed/payment/600/400",
+          body: "Comprovante de pagamento enviado automaticamente após confirmação do Stripe webhook.",
+        },
+        {
+          summary: "Encaminhou chamado para time humano",
+          contentType: "text",
+          body: "Cliente solicitou reembolso fora da política automática — escalado para atendimento humano com contexto completo.",
+        },
       ],
       "ci-alerts": [
-        "Detectou falha no workflow {workflow}",
-        "Abriu issue automática por CI",
+        {
+          summary: "Detectou falha no workflow deploy.yml",
+          contentType: "link",
+          contentUrl:
+            "https://github.com/iamlucasdantas/openclaw-dashboard/actions/runs/9876543",
+          body:
+            "Run falhou na etapa de build com:\n\n" +
+            "```\nError: Build optimization failed\n  at compile (webpack.js:412:15)\n```\n\n" +
+            "Abrindo issue automaticamente.",
+        },
+        {
+          summary: "Abriu issue automática por CI",
+          contentType: "link",
+          contentUrl:
+            "https://github.com/iamlucasdantas/openclaw-dashboard/issues/88",
+          body: "Issue #88 criada com logs do run falho e stack trace. Atribuído para o time de infra.",
+        },
       ],
       "react-loop": [
-        "Resolveu tarefa em {n} etapas",
-        "Chamou ferramenta {tool}",
+        {
+          summary: "Resolveu tarefa 'gerar post LinkedIn' em 4 etapas",
+          contentType: "text",
+          body:
+            "Passos executados:\n" +
+            "1. Buscou contexto do produto (skill:memory-kv)\n" +
+            "2. Gerou rascunho com tom inspiracional\n" +
+            "3. Revisou para remover jargão técnico\n" +
+            "4. Entregou ao cliente para aprovação\n\n" +
+            "Conteúdo final:\n\n---\n\n" +
+            "\"A verdadeira inovação começa quando paramos de otimizar o passado " +
+            "e passamos a projetar o futuro. Hoje nosso agente lançou a v2.0 e " +
+            "isso é só o começo. 🚀\"\n\n#ia #agentes #openclaw",
+        },
+        {
+          summary: "Chamou ferramenta search 3x para responder pergunta",
+          contentType: "text",
+          body:
+            "Query do usuário: 'qual foi o melhor trimestre em vendas'.\n\n" +
+            "Busquei em 3 fontes (CRM, planilha, relatório Q-anterior). " +
+            "Resposta consolidada: Q3 2025 teve 187% do target, puxado por " +
+            "entrada de 4 contas enterprise.",
+        },
       ],
       "memory-kv": [
-        "Salvou preferência do usuário",
-        "Recuperou contexto da sessão anterior",
+        {
+          summary: "Salvou preferência do usuário",
+          contentType: "text",
+          body:
+            "Chave: user.preferences.tone\n" +
+            "Valor: 'informal e direto'\n" +
+            "Origem: mensagem do usuário em 18/04 às 10:15",
+        },
+        {
+          summary: "Recuperou contexto da sessão anterior",
+          contentType: "text",
+          body: "Carregou 24 chaves de memória longa: perfil do cliente, preferências, últimos 5 tópicos discutidos.",
+        },
       ],
     };
 
     const statusPool = ["ok", "ok", "ok", "ok", "ok", "warning", "error"];
     const bulk: any[] = [];
+
     for (const install of installs) {
-      const list = samples[install.skill.slug] ?? ["Executou ação"];
-      const count = 8 + Math.floor(Math.random() * 20);
+      const list = samples[install.skill.slug] ?? [
+        { summary: "Executou ação", body: "Sem detalhes disponíveis." },
+      ];
+      const count = 10 + Math.floor(Math.random() * 20);
+
       for (let i = 0; i < count; i++) {
-        const template = list[Math.floor(Math.random() * list.length)];
-        const summary = template
-          .replace("{n}", String(1 + Math.floor(Math.random() * 400)))
-          .replace("{from}", ["Ana", "Carlos", "Bruno", "Marina"][Math.floor(Math.random() * 4)])
-          .replace("{client}", ["@acme", "@initech", "@beta", "@gama"][Math.floor(Math.random() * 4)])
-          .replace("{repo}", "iamlucasdantas/openclaw-dashboard")
-          .replace("{day}", ["segunda", "terça", "quarta"][Math.floor(Math.random() * 3)])
-          .replace("{channel}", ["dev", "suporte", "geral"][Math.floor(Math.random() * 3)])
-          .replace("{user}", ["ana", "carlos", "marina"][Math.floor(Math.random() * 3)])
-          .replace("{workflow}", ["ci.yml", "deploy.yml", "lint.yml"][Math.floor(Math.random() * 3)])
-          .replace("{tool}", ["search", "sql", "github", "calendar"][Math.floor(Math.random() * 4)]);
+        const pick = list[Math.floor(Math.random() * list.length)];
         const status = statusPool[Math.floor(Math.random() * statusPool.length)];
-        const daysAgo = Math.floor(Math.random() * 14);
+        const daysAgo = Math.floor(Math.random() * 30); // 30 dias de janela
         const occurredAt = new Date();
-        occurredAt.setHours(8 + Math.floor(Math.random() * 14));
+        occurredAt.setHours(7 + Math.floor(Math.random() * 15));
         occurredAt.setMinutes(Math.floor(Math.random() * 60));
+        occurredAt.setSeconds(Math.floor(Math.random() * 60));
         occurredAt.setDate(occurredAt.getDate() - daysAgo);
+
         bulk.push({
           agentSkillId: install.id,
-          summary,
+          summary: pick.summary,
+          body: pick.body ?? null,
+          contentType: pick.contentType ?? null,
+          contentUrl: pick.contentUrl ?? null,
           status,
           occurredAt,
         });

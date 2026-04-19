@@ -125,11 +125,15 @@ model AgentSkill {
 
 // Atividade registrada por uma skill instalada — usado para histórico
 // legível por cliente ("enviou email", "abriu PR", "respondeu atendimento").
+// Conteúdo (body/image/link) permite "ver exatamente o que foi feito".
+// Retenção de 30 dias — entradas mais antigas são limpas automaticamente.
 model SkillActivity {
   id            String   @id @default(cuid())
   agentSkillId  String
   summary       String
-  detail        String?
+  body          String?  // texto longo gerado/enviado
+  contentType   String?  // text | image | link | file
+  contentUrl    String?  // URL da imagem, link, ou arquivo
   status        String   @default("ok") // ok | error | warning
   occurredAt    DateTime
   createdAt     DateTime @default(now())

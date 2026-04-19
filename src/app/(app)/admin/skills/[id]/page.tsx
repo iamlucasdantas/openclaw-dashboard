@@ -4,14 +4,17 @@ import { Pencil } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { Button, PageHeader } from "@/components/form";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { ActivityItem } from "@/components/activity-item";
 import { catMeta } from "@/lib/skill-meta";
-import { formatDate } from "@/lib/utils";
+import { cleanupOldSkillActivities } from "@/lib/retention";
 
 export default async function SkillDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await cleanupOldSkillActivities();
+
   const { id } = await params;
 
   const skill = await prisma.skill.findUnique({
@@ -22,7 +25,7 @@ export default async function SkillDetailPage({
           agent: { include: { tenant: true } },
           activities: {
             orderBy: { occurredAt: "desc" },
-            take: 30,
+            take: 60,
           },
         },
       },
@@ -37,11 +40,14 @@ export default async function SkillDetailPage({
     .flatMap((i) =>
       i.activities.map((a) => ({
         ...a,
-        agent: i.agent,
+        agent: {
+          agentId: i.agent.agentId,
+          name: i.agent.name,
+        },
       }))
     )
     .sort((a, b) => b.occurredAt.getTime() - a.occurredAt.getTime())
-    .slice(0, 50);
+    .slice(0, 100);
 
   const statusCounts = allActivities.reduce(
     (acc, a) => {
@@ -60,9 +66,9 @@ export default async function SkillDetailPage({
         ]}
       />
 
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="mb-1 flex items-center gap-2">
+          <div className="mb-1 flex flex-wrap items-center gap-2">
             <span aria-hidden className="text-xl">
               {meta.emoji}
             </span>
@@ -101,7 +107,7 @@ export default async function SkillDetailPage({
           value={skill.installations.filter((i) => i.enabled).length.toString()}
         />
         <Card
-          label="Atividades (últimos dias)"
+          label="Atividades (30 dias)"
           value={allActivities.length.toString()}
           hint={
             statusCounts.error
@@ -167,28 +173,17 @@ export default async function SkillDetailPage({
             Histórico de atividades ({allActivities.length})
           </h2>
           <p className="text-xs text-muted-foreground">
-            As últimas coisas que seus agentes fizeram usando esta habilidade.
+            Últimos 30 dias. Clique em cada linha para abrir o conteúdo.
+            Atividades mais antigas são removidas automaticamente.
           </p>
         </div>
         <ul className="divide-y">
           {allActivities.map((a) => (
-            <li key={a.id} className="flex items-start gap-3 px-5 py-3 text-sm">
-              <StatusDot status={a.status} />
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-baseline gap-2">
-                  <span>{a.summary}</span>
-                  <Link
-                    href={`/admin/agents/${a.agent.agentId}`}
-                    className="text-[11px] text-muted-foreground hover:underline"
-                  >
-                    {a.agent.name}
-                  </Link>
-                </div>
-                <div className="text-[11px] text-muted-foreground">
-                  {formatDate(a.occurredAt)}
-                </div>
-              </div>
-            </li>
+            <ActivityItem
+              key={a.id}
+              a={a}
+              agentHrefPrefix="/admin/agents"
+            />
           ))}
           {allActivities.length === 0 && (
             <li className="px-5 py-8 text-center text-xs text-muted-foreground">
@@ -220,16 +215,5 @@ function Card({
         <div className="mt-0.5 text-[11px] text-muted-foreground">{hint}</div>
       ) : null}
     </div>
-  );
-}
-
-function StatusDot({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    ok: "bg-emerald-500",
-    error: "bg-destructive",
-    warning: "bg-amber-500",
-  };
-  return (
-    <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${map[status] ?? "bg-muted-foreground/50"}`} />
   );
 }

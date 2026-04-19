@@ -3,14 +3,17 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { ActivityItem } from "@/components/activity-item";
 import { catMeta } from "@/lib/skill-meta";
-import { formatDate } from "@/lib/utils";
+import { cleanupOldSkillActivities } from "@/lib/retention";
 
 export default async function ClientSkillDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await cleanupOldSkillActivities();
+
   const session = await auth();
   if (!session?.user) redirect("/login");
   const tenantIds = session.user.tenantIds ?? [];
@@ -23,7 +26,7 @@ export default async function ClientSkillDetailPage({
         where: { agent: { tenantId: { in: tenantIds } } },
         include: {
           agent: { include: { tenant: true } },
-          activities: { orderBy: { occurredAt: "desc" }, take: 40 },
+          activities: { orderBy: { occurredAt: "desc" }, take: 80 },
         },
       },
     },
@@ -34,10 +37,13 @@ export default async function ClientSkillDetailPage({
 
   const allActivities = skill.installations
     .flatMap((i) =>
-      i.activities.map((a) => ({ ...a, agent: i.agent }))
+      i.activities.map((a) => ({
+        ...a,
+        agent: { agentId: i.agent.agentId, name: i.agent.name },
+      }))
     )
     .sort((a, b) => b.occurredAt.getTime() - a.occurredAt.getTime())
-    .slice(0, 60);
+    .slice(0, 120);
 
   return (
     <div className="space-y-6">
@@ -74,7 +80,7 @@ export default async function ClientSkillDetailPage({
           value={skill.installations.length.toString()}
         />
         <Card
-          label="Atividades recentes (14 dias)"
+          label="Atividades (30 dias)"
           value={allActivities.length.toString()}
         />
       </div>
@@ -126,28 +132,18 @@ export default async function ClientSkillDetailPage({
             Histórico ({allActivities.length})
           </h2>
           <p className="text-xs text-muted-foreground">
-            Últimas coisas que seus agentes fizeram usando esta habilidade.
+            Últimos 30 dias. Clique em cada atividade para ver o conteúdo exato
+            (texto, imagem ou link). Atividades mais antigas são removidas
+            automaticamente.
           </p>
         </div>
         <ul className="divide-y">
           {allActivities.map((a) => (
-            <li key={a.id} className="flex items-start gap-3 px-5 py-3 text-sm">
-              <StatusDot status={a.status} />
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-baseline gap-2">
-                  <span>{a.summary}</span>
-                  <Link
-                    href={`/client/agents/${a.agent.agentId}`}
-                    className="text-[11px] text-muted-foreground hover:underline"
-                  >
-                    {a.agent.name}
-                  </Link>
-                </div>
-                <div className="text-[11px] text-muted-foreground">
-                  {formatDate(a.occurredAt)}
-                </div>
-              </div>
-            </li>
+            <ActivityItem
+              key={a.id}
+              a={a}
+              agentHrefPrefix="/client/agents"
+            />
           ))}
           {allActivities.length === 0 && (
             <li className="px-5 py-8 text-center text-xs text-muted-foreground">
@@ -168,20 +164,5 @@ function Card({ label, value }: { label: string; value: string }) {
       </div>
       <div className="mt-1 text-2xl font-semibold tabular-nums">{value}</div>
     </div>
-  );
-}
-
-function StatusDot({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    ok: "bg-emerald-500",
-    error: "bg-destructive",
-    warning: "bg-amber-500",
-  };
-  return (
-    <span
-      className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
-        map[status] ?? "bg-muted-foreground/50"
-      }`}
-    />
   );
 }
