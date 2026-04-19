@@ -1,39 +1,57 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { Pencil } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { formatDate } from "@/lib/utils";
 import { effectiveStatus } from "@/lib/agent-status";
-import { Button } from "@/components/form";
-import { DeleteButton } from "@/components/delete-button";
-import { StatusPill } from "@/components/status-pill";
-import { Breadcrumbs } from "@/components/breadcrumbs";
-import { HeartbeatIntegration } from "@/components/heartbeat-integration";
-import { GithubSection } from "@/components/github-integration";
-import { SkillsManager } from "@/components/skills-manager";
-import { CronsManager } from "@/components/crons-manager";
-import { BudgetBar } from "@/components/budget-bar";
-import { AgentBudgetForm } from "@/components/budget-form";
 import { costForAgentThisMonth } from "@/lib/costs-queries";
+import {
+  activityCounts,
+  activityTimeline,
+  upcomingTasksForAgent,
+} from "@/lib/agent-queries";
+import { AgentHeader } from "@/components/agent-tabs/AgentHeader";
+import type { TabKey } from "@/components/agent-tabs/AgentHeader";
+import { TabSummary } from "@/components/agent-tabs/TabSummary";
+import { TabActivity } from "@/components/agent-tabs/TabActivity";
+import { TabConnections } from "@/components/agent-tabs/TabConnections";
+import { TabDeveloper } from "@/components/agent-tabs/TabDeveloper";
 import { deleteAgent } from "@/app/actions/agents";
+
+type Range = "today" | "7d" | "30d";
 
 export default async function ClientAgentDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ agentId: string }>;
+  searchParams: Promise<{ tab?: string; range?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
   const tenantIds = session.user.tenantIds ?? [];
 
   const { agentId } = await params;
+  const sp = await searchParams;
+  const tab: TabKey =
+    sp.tab === "activity" ||
+    sp.tab === "connections" ||
+    sp.tab === "dev"
+      ? (sp.tab as TabKey)
+      : "summary";
+  const range: Range =
+    sp.range === "7d" || sp.range === "30d" ? sp.range : "today";
+
   const [agent, skillCatalog] = await Promise.all([
     prisma.agent.findUnique({
       where: { agentId },
       include: {
         tenant: true,
-        github: { include: { repos: { orderBy: [{ owner: "asc" }, { name: "asc" }] } } },
+        github: {
+          include: {
+            repos: { orderBy: [{ owner: "asc" }, { name: "asc" }] },
+          },
+        },
         skills: {
           include: {
             skill: true,
@@ -47,124 +65,74 @@ export default async function ClientAgentDetailPage({
     }),
     prisma.skill.findMany({
       orderBy: [{ category: "asc" }, { name: "asc" }],
-      select: { id: true, slug: true, name: true, category: true, description: true },
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        category: true,
+        description: true,
+      },
     }),
   ]);
+
   if (!agent) notFound();
   if (!tenantIds.includes(agent.tenantId)) notFound();
 
-  const usedThisMonth = await costForAgentThisMonth(agent.id);
+  const status = effectiveStatus(agent);
+  const basePath = `/client/agents/${agent.agentId}`;
 
   const deleteThisAgent = async () => {
     "use server";
     await deleteAgent(agent.id, "client");
   };
 
-  const eff = effectiveStatus(agent);
+  // Carrega só o que cada tab precisa — mantém o TTFB baixo.
+  let tabContent: React.ReactNode;
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <Breadcrumbs
-          items={[
-            { label: "Meus agentes", href: "/client/agents" },
-            { label: agent.name },
-          ]}
-        />
-        <div className="mt-2 flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {agent.name}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                {agent.agentId}
-              </code>{" "}
-              · {agent.tenant.name}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Link href={`/client/agents/${agent.agentId}/edit`}>
-              <Button variant="secondary">
-                <Pencil className="h-4 w-4" />
-                Editar
-              </Button>
-            </Link>
-            <form action={deleteThisAgent}>
-              <DeleteButton
-                message={`Excluir agente "${agent.name}"? Esta ação não pode ser desfeita.`}
-              />
-            </form>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border bg-card p-4">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">
-            Status
-          </div>
-          <div className="mt-2">
-            <StatusPill status={eff} scope="client" />
-          </div>
-        </div>
-        <Card label="Modelo" value={agent.model ?? "—"} />
-        <Card label="Criado em" value={formatDate(agent.createdAt)} />
-        <Card label="Último heartbeat" value={formatDate(agent.lastHeartbeatAt)} />
-      </div>
-
-      {agent.persona ? (
-        <section className="rounded-lg border bg-card">
-          <div className="border-b px-5 py-3">
-            <h2 className="text-sm font-semibold">Persona</h2>
-          </div>
-          <div className="px-5 py-4 text-sm">{agent.persona}</div>
-        </section>
-      ) : null}
-
-      <section className="rounded-lg border bg-card">
-        <div className="border-b px-5 py-3">
-          <h2 className="text-sm font-semibold">Limite mensal de custo</h2>
-        </div>
-        <div className="space-y-4 p-5">
-          <BudgetBar used={usedThisMonth} budget={agent.monthlyBudgetUsd} />
-          <AgentBudgetForm
-            agentDbId={agent.id}
-            scope="client"
-            current={agent.monthlyBudgetUsd}
-          />
-        </div>
-      </section>
-
-      <HeartbeatIntegration agent={agent} scope="client" />
-
-      <GithubSection
-        agentDbId={agent.id}
-        scope="client"
-        integration={
-          agent.github
-            ? {
-                id: agent.github.id,
-                mode: agent.github.mode,
-                scope: agent.github.scope,
-                org: agent.github.org,
-                defaultBranch: agent.github.defaultBranch,
-                tokenPreview: agent.github.tokenPreview,
-                repos: agent.github.repos.map((r) => ({
-                  id: r.id,
-                  owner: r.owner,
-                  name: r.name,
-                  role: r.role,
-                })),
-              }
-            : null
-        }
+  if (tab === "summary") {
+    const [counts, usedUsd, upcoming] = await Promise.all([
+      activityCounts(agent.id),
+      costForAgentThisMonth(agent.id),
+      upcomingTasksForAgent(agent.id, 5),
+    ]);
+    tabContent = (
+      <TabSummary
+        counts={counts}
+        usedThisMonthUsd={usedUsd}
+        budgetUsd={agent.monthlyBudgetUsd}
+        upcoming={upcoming}
+        editHref={`${basePath}/edit`}
+        scheduleHref="/client/crons"
+        onDeleteAction={deleteThisAgent}
+        agentName={agent.name}
       />
-
-      <SkillsManager
+    );
+  } else if (tab === "activity") {
+    const raw = await activityTimeline(agent.id, range);
+    const activities = raw.map((a) => ({
+      id: a.id,
+      summary: a.summary,
+      body: a.body,
+      contentType: a.contentType,
+      contentUrl: a.contentUrl,
+      status: a.status,
+      occurredAt: a.occurredAt,
+      agent: { agentId: agent.agentId, name: agent.name },
+    }));
+    tabContent = (
+      <TabActivity
+        range={range}
+        basePath={`${basePath}?tab=activity`}
+        activities={activities}
+        agentHrefPrefix="/client/agents"
+      />
+    );
+  } else if (tab === "connections") {
+    tabContent = (
+      <TabConnections
         agentDbId={agent.id}
         scope="client"
-        installed={agent.skills.map((s) => ({
+        skillsInstalled={agent.skills.map((s) => ({
           id: s.id,
           enabled: s.enabled,
           skill: {
@@ -184,21 +152,73 @@ export default async function ClientAgentDetailPage({
             : null,
           activityCount: s._count.activities,
         }))}
-        catalog={skillCatalog}
+        skillCatalog={skillCatalog}
+        crons={agent.crons}
+        github={
+          agent.github
+            ? {
+                org: agent.github.org,
+                repos: agent.github.repos.map((r) => ({
+                  owner: r.owner,
+                  name: r.name,
+                  role: r.role,
+                })),
+              }
+            : null
+        }
+        githubAdvancedHref={`${basePath}?tab=dev`}
+      />
+    );
+  } else {
+    tabContent = (
+      <TabDeveloper
+        agent={agent}
+        scope="client"
+        githubIntegration={
+          agent.github
+            ? {
+                id: agent.github.id,
+                mode: agent.github.mode,
+                scope: agent.github.scope,
+                org: agent.github.org,
+                defaultBranch: agent.github.defaultBranch,
+                tokenPreview: agent.github.tokenPreview,
+                repos: agent.github.repos.map((r) => ({
+                  id: r.id,
+                  owner: r.owner,
+                  name: r.name,
+                  role: r.role,
+                })),
+              }
+            : null
+        }
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <Link
+        href="/client/agents"
+        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <ArrowLeft className="h-3 w-3" aria-hidden />
+        Voltar para meus assistentes
+      </Link>
+
+      <AgentHeader
+        agent={{
+          name: agent.name,
+          persona: agent.persona,
+          tenantName: agent.tenant.name,
+        }}
+        status={status}
+        currentTab={tab}
+        basePath={basePath}
+        scope="client"
       />
 
-      <CronsManager agentDbId={agent.id} scope="client" crons={agent.crons} />
-    </div>
-  );
-}
-
-function Card({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border bg-card p-4">
-      <div className="text-xs uppercase tracking-wider text-muted-foreground">
-        {label}
-      </div>
-      <div className="mt-1 text-sm font-medium">{value}</div>
+      {tabContent}
     </div>
   );
 }

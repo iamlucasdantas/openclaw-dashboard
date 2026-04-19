@@ -61,6 +61,7 @@ export const copy = {
 
   // Tela do assistente
   agent: {
+    personaFallback: "Este assistente ainda não tem descrição configurada.",
     detail: {
       tabs: {
         summary: "Resumo",
@@ -74,9 +75,52 @@ export const copy = {
         connections: "Onde o {assistantName} pode atuar",
         advanced: "Área técnica — só se precisar integrar no código",
       },
+      stats: {
+        today: "ações hoje",
+        week: "ações em 7 dias",
+        month: "ações este mês",
+      },
+      actionsArea: "Ações",
+      upcomingTitle: "Próximas tarefas",
+      upcomingEmpty: "Nenhuma tarefa agendada nos próximos 7 dias.",
+      seeSchedule: "ver agenda completa",
+      activity: {
+        filtersLabel: "Filtrar:",
+        filterToday: "Hoje",
+        filter7: "7 dias",
+        filter30: "30 dias",
+        total: "Total: {n} atividades no período",
+        empty: "Nenhuma atividade neste período.",
+      },
+      connections: {
+        skillsTitle: "O que seu assistente sabe fazer",
+        skillsSubtitle:
+          "Cada habilidade é algo que o assistente executa por você.",
+        cronsTitle: "Tarefas agendadas",
+        cronsSubtitle: "Rotinas que o assistente roda em horários fixos.",
+        githubTitle: "GitHub",
+        githubConnected: "Conectado à organização {org}",
+        githubConnectedNoOrg: "Conectado ao GitHub",
+        githubReposIntro: "Pode atuar em:",
+        githubRepoLine: "{owner}/{name} ({role})",
+        githubEmpty:
+          "O assistente ainda não está conectado ao GitHub. Isso permite abrir issues e PRs automaticamente.",
+        manageTechnical: "Abrir detalhes técnicos",
+      },
+      dev: {
+        warning:
+          "Área técnica — use apenas se precisar integrar seu assistente ao código. Veja o README pra um passo-a-passo.",
+        identifier: "Identificador",
+        heartbeatSection: "Conexão técnica (heartbeat)",
+        githubSection: "GitHub (metadados técnicos)",
+        githubMode: "Modo:",
+        githubScope: "Escopo do token:",
+        githubBranch: "Branch padrão:",
+        githubTokenPreview: "Últimos 4 chars do token:",
+      },
     },
     actions: {
-      edit: "Editar assistente",
+      edit: "Editar",
       pause: "Pausar assistente",
       resume: "Reativar assistente",
       delete: "Desligar assistente",
