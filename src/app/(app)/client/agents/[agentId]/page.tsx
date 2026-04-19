@@ -105,7 +105,7 @@ export default async function ClientAgentDetailPage({
             Status
           </div>
           <div className="mt-2">
-            <StatusPill status={eff} />
+            <StatusPill status={eff} scope="client" />
           </div>
         </div>
         <Card label="Modelo" value={agent.model ?? "—"} />

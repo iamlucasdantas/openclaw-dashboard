@@ -68,7 +68,7 @@ export default async function ClientAgentsPage() {
                   </code>
                 </td>
                 <td className="px-5 py-3">
-                  <StatusPill status={effectiveStatus(a)} />
+                  <StatusPill status={effectiveStatus(a)} scope="client" />
                 </td>
                 <td className="px-5 py-3 text-muted-foreground">
                   {a.model ?? "—"}

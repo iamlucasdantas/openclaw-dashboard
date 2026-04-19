@@ -92,7 +92,7 @@ export default async function ClientOverview() {
                     </div>
                   </td>
                   <td className="px-5 py-2.5">
-                    <StatusPill status={effectiveStatus(a)} />
+                    <StatusPill status={effectiveStatus(a)} scope="client" />
                   </td>
                   <td className="px-5 py-2.5 text-muted-foreground">
                     {a.model ?? "—"}
