@@ -144,31 +144,81 @@ export const copy = {
       subtitle: "Tudo que seus assistentes vão executar nos próximos dias.",
     },
     wizard: {
-      title: "Agendar uma tarefa",
-      steps: ["O que fazer", "Quando", "Confirmar"],
+      pageTitle: "Agendar uma tarefa",
+      stepIndicator: "Passo {current} de {total}",
+      steps: {
+        task: "O que fazer",
+        when: "Quando rodar",
+        confirm: "Confirmar",
+      },
+      subtitles: {
+        task: "Diga o nome da tarefa e o que o assistente deve fazer.",
+        when: "Escolha com que frequência a tarefa vai rodar.",
+        confirm: "Confira os detalhes antes de criar a tarefa.",
+      },
+      fields: {
+        name: "Nome da tarefa",
+        namePlaceholder: "Ex: Revisar PRs abertos",
+        command: "O que o assistente deve fazer?",
+        commandPlaceholder:
+          'Ex: "Revisar PRs abertos e me avisar no Slack"',
+        commandHint:
+          "Descreva em português como se fosse pedir pra uma pessoa.",
+      },
       frequency: {
-        once: {
-          label: "Uma vez",
-          description: "Roda em uma data específica e pronto.",
+        minutes: {
+          label: "A cada X minutos",
+          emoji: "⏱️",
+          description: "Ex: a cada 15, 30 ou 60 minutos.",
+        },
+        hourly: {
+          label: "De hora em hora",
+          emoji: "🕐",
+          description: "Roda no minuto 0 de cada hora.",
         },
         daily: {
           label: "Todo dia",
-          description: "Escolha o horário; roda diariamente.",
+          emoji: "📅",
+          description: "No horário que você escolher.",
         },
         weekly: {
           label: "Toda semana",
-          description: "Escolha dias da semana e horário.",
+          emoji: "🗓️",
+          description: "Em um dia específico da semana.",
         },
         monthly: {
           label: "Todo mês",
-          description: "Escolha o dia do mês e o horário.",
+          emoji: "📆",
+          description: "Em um dia específico do mês.",
         },
-        custom: {
-          label: "Intervalo personalizado",
-          description: "A cada X minutos ou horas.",
+        advanced: {
+          label: "Avançado",
+          emoji: "🛠️",
+          description: "Para quem sabe cron.",
         },
       },
-      preview: "Vai rodar {humanSchedule}, a partir de {startDate}.",
+      preview: {
+        title: "Prévia",
+        natural: "Vai rodar {humanSchedule}.",
+        nextRuns: "Próximas execuções:",
+      },
+      confirm: {
+        intro: "O assistente {name} vai executar:",
+        firstRun: "Primeira execução: {when}",
+        stateLabel: "Estado inicial",
+        stateActive: "Ativa (já começa a rodar)",
+        statePaused: "Pausada (ligo depois)",
+      },
+      buttons: {
+        next: "Próximo",
+        back: "Voltar",
+        cancel: "Cancelar",
+        create: "Criar tarefa",
+      },
+      errors: {
+        nameRequired: "Dê um nome pra tarefa.",
+        commandRequired: "Descreva o que o assistente deve fazer.",
+      },
     },
   },
 

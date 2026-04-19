@@ -167,6 +167,7 @@ export default async function ClientAgentDetailPage({
             : null
         }
         githubAdvancedHref={`${basePath}?tab=dev`}
+        scheduleWizardHref={`${basePath}/schedule/new`}
       />
     );
   } else {

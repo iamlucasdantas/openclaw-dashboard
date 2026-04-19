@@ -17,6 +17,7 @@ type Props = {
     repos: GithubRepo[];
   } | null;
   githubAdvancedHref: string;
+  scheduleWizardHref: string;
 };
 
 export function TabConnections({
@@ -27,6 +28,7 @@ export function TabConnections({
   crons,
   github,
   githubAdvancedHref,
+  scheduleWizardHref,
 }: Props) {
   return (
     <div className="space-y-6">
@@ -37,7 +39,12 @@ export function TabConnections({
         catalog={skillCatalog}
       />
 
-      <CronsManager agentDbId={agentDbId} scope={scope} crons={crons} />
+      <CronsManager
+        agentDbId={agentDbId}
+        scope={scope}
+        crons={crons}
+        wizardHref={scheduleWizardHref}
+      />
 
       <section className="rounded-lg border bg-card">
         <div className="border-b px-5 py-3">

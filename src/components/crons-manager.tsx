@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useTransition } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { CalendarDays, Clock, Pause, Play, Trash2 } from "lucide-react";
+import { CalendarDays, Clock, Pause, Play, Plus, Trash2, Wand2 } from "lucide-react";
 import {
   createCron,
   deleteCron,
@@ -39,24 +40,36 @@ export function CronsManager({
   agentDbId,
   scope,
   crons,
+  wizardHref,
 }: {
   agentDbId: string;
   scope: "admin" | "client";
   crons: CronRow[];
+  wizardHref?: string;
 }) {
   const action = createCron.bind(null, scope);
   const [state, formAction] = useFormState<CronFormState, FormData>(action, {});
 
   return (
     <section className="rounded-lg border bg-card">
-      <div className="border-b px-5 py-3">
-        <h2 className="flex items-center gap-2 text-sm font-semibold">
-          <CalendarDays className="h-4 w-4" /> Tarefas agendadas
-        </h2>
-        <p className="text-xs text-muted-foreground">
-          Cada tarefa é uma rotina que o agente executa sozinho em horários
-          definidos. Você pode pausar ou excluir a qualquer momento.
-        </p>
+      <div className="flex flex-col gap-3 border-b px-5 py-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <CalendarDays className="h-4 w-4" /> Tarefas agendadas
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Cada tarefa é uma rotina que o agente executa sozinho em horários
+            definidos. Você pode pausar ou excluir a qualquer momento.
+          </p>
+        </div>
+        {wizardHref ? (
+          <Link href={wizardHref}>
+            <Button type="button" variant="secondary" className="shrink-0">
+              <Wand2 className="h-4 w-4" />
+              Agendamento guiado
+            </Button>
+          </Link>
+        ) : null}
       </div>
 
       <ul className="divide-y">

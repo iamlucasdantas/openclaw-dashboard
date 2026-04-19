@@ -187,7 +187,12 @@ export default async function AgentDetailPage({
         catalog={skillCatalog}
       />
 
-      <CronsManager agentDbId={agent.id} scope="admin" crons={agent.crons} />
+      <CronsManager
+        agentDbId={agent.id}
+        scope="admin"
+        crons={agent.crons}
+        wizardHref={`/admin/agents/${agent.agentId}/schedule/new`}
+      />
     </div>
   );
 }
