@@ -20,6 +20,7 @@ export const copy = {
     client: {
       home: "Início",
       agents: "Meus assistentes",
+      integrations: "Integrações",
       schedule: "Agenda",
       costs: "Faturamento",
       profile: "Minha conta",
@@ -28,6 +29,7 @@ export const copy = {
       overview: "Visão geral",
       tenants: "Clientes",
       agents: "Agentes",
+      integrations: "Integrações",
       github: "GitHub",
       skills: "Habilidades",
       crons: "Agendamentos",

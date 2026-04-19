@@ -11,6 +11,7 @@ import {
   History,
   LayoutDashboard,
   Mail,
+  Plug,
   Sparkles,
   Users,
   UserCog,
@@ -32,6 +33,7 @@ export function NavLinks({
     { href: "/admin", label: copy.nav.admin.overview, icon: LayoutDashboard },
     { href: "/admin/tenants", label: copy.nav.admin.tenants, icon: Building2 },
     { href: "/admin/agents", label: copy.nav.admin.agents, icon: Bot },
+    { href: "/admin/integrations", label: copy.nav.admin.integrations, icon: Plug },
     { href: "/admin/github", label: copy.nav.admin.github, icon: Github },
     { href: "/admin/skills", label: copy.nav.admin.skills, icon: Sparkles },
     { href: "/admin/crons", label: copy.nav.admin.crons, icon: CalendarDays },
@@ -44,6 +46,11 @@ export function NavLinks({
   const clientNav = [
     { href: "/client", label: copy.nav.client.home, icon: LayoutDashboard },
     { href: "/client/agents", label: copy.nav.client.agents, icon: Bot },
+    {
+      href: "/client/integrations",
+      label: copy.nav.client.integrations,
+      icon: Plug,
+    },
     { href: "/client/crons", label: copy.nav.client.schedule, icon: CalendarDays },
     { href: "/client/costs", label: copy.nav.client.costs, icon: DollarSign },
     { href: "/client/profile", label: copy.nav.client.profile, icon: UserCog },

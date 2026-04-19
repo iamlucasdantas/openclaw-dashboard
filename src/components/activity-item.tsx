@@ -25,6 +25,111 @@ const STATUS_DOT: Record<string, string> = {
 export function ActivityItem({
   a,
   agentHrefPrefix,
+  /**
+   * "expanded" = imagem e corpo aparecem sempre (visual-first).
+   * "compact"  = comportamento antigo com <details> pra clicar.
+   */
+  density = "expanded",
+}: {
+  a: ActivityForDisplay;
+  agentHrefPrefix?: "/admin/agents" | "/client/agents";
+  density?: "expanded" | "compact";
+}) {
+  const hasMedia = a.contentType === "image" && a.contentUrl;
+  const hasLink = a.contentType === "link" && a.contentUrl;
+  const hasBody = !!a.body;
+  const hasAny = hasMedia || hasLink || hasBody;
+
+  if (density === "compact") return <CompactRow a={a} agentHrefPrefix={agentHrefPrefix} />;
+
+  return (
+    <li className="px-5 py-4">
+      <div className="flex items-start gap-3">
+        <span
+          className={cn(
+            "mt-1.5 h-2 w-2 shrink-0 rounded-full",
+            STATUS_DOT[a.status] ?? "bg-muted-foreground/50"
+          )}
+          aria-hidden
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-baseline gap-2">
+            <span className="font-medium">{a.summary}</span>
+            {a.contentType === "image" ? (
+              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wider">
+                imagem
+              </span>
+            ) : null}
+            {a.contentType === "link" ? (
+              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wider">
+                link
+              </span>
+            ) : null}
+            {a.agent && agentHrefPrefix ? (
+              <Link
+                href={`${agentHrefPrefix}/${a.agent.agentId}`}
+                className="text-[11px] text-muted-foreground hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {a.agent.name}
+              </Link>
+            ) : null}
+          </div>
+          <div className="mt-0.5 text-[11px] text-muted-foreground">
+            {formatFull(a.occurredAt)}
+          </div>
+
+          {hasAny ? (
+            <div className="mt-3 space-y-3">
+              {hasMedia ? (
+                <a
+                  href={a.contentUrl!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block overflow-hidden rounded-md border"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={a.contentUrl!}
+                    alt={a.summary}
+                    className="block max-h-80 w-full object-cover"
+                    loading="lazy"
+                  />
+                </a>
+              ) : null}
+
+              {hasLink ? (
+                <a
+                  href={a.contentUrl!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1.5 text-xs font-medium hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <ExternalLink className="h-3 w-3" aria-hidden />
+                  {truncateUrl(a.contentUrl!)}
+                </a>
+              ) : null}
+
+              {hasBody ? (
+                <details open={!hasMedia}>
+                  <summary className="cursor-pointer select-none text-[11px] text-muted-foreground hover:text-foreground">
+                    {hasMedia ? "Ver texto completo" : "Texto completo"}
+                  </summary>
+                  <pre className="mt-2 whitespace-pre-wrap break-words rounded-md bg-muted px-3 py-2 text-xs leading-relaxed">
+                    {a.body}
+                  </pre>
+                </details>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </li>
+  );
+}
+
+function CompactRow({
+  a,
+  agentHrefPrefix,
 }: {
   a: ActivityForDisplay;
   agentHrefPrefix?: "/admin/agents" | "/client/agents";
@@ -33,35 +138,20 @@ export function ActivityItem({
     !!a.body ||
     (a.contentType === "image" && a.contentUrl) ||
     (a.contentType === "link" && a.contentUrl);
-
   return (
     <li className="px-5 py-3 text-sm">
       <details className="group">
-        <summary
-          className={cn(
-            "flex cursor-pointer list-none items-start gap-3 rounded",
-            hasContent && "hover:text-foreground"
-          )}
-        >
+        <summary className="flex cursor-pointer list-none items-start gap-3 rounded">
           <span
             className={cn(
               "mt-1.5 h-2 w-2 shrink-0 rounded-full",
               STATUS_DOT[a.status] ?? "bg-muted-foreground/50"
             )}
+            aria-hidden
           />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-baseline gap-2">
               <span className="font-medium">{a.summary}</span>
-              {a.contentType === "image" ? (
-                <span className="rounded bg-muted px-1.5 py-0.5 text-[10px]">
-                  imagem
-                </span>
-              ) : null}
-              {a.contentType === "link" ? (
-                <span className="rounded bg-muted px-1.5 py-0.5 text-[10px]">
-                  link
-                </span>
-              ) : null}
               {a.agent && agentHrefPrefix ? (
                 <Link
                   href={`${agentHrefPrefix}/${a.agent.agentId}`}
@@ -77,11 +167,10 @@ export function ActivityItem({
           </div>
           {hasContent ? (
             <span className="text-[11px] text-muted-foreground group-open:hidden">
-              ver conteúdo
+              abrir
             </span>
           ) : null}
         </summary>
-
         {hasContent ? (
           <div className="mt-3 space-y-3 border-l-2 border-muted pl-5">
             {a.contentType === "image" && a.contentUrl ? (
@@ -100,7 +189,6 @@ export function ActivityItem({
                 />
               </a>
             ) : null}
-
             {a.contentType === "link" && a.contentUrl ? (
               <a
                 href={a.contentUrl}
@@ -108,11 +196,10 @@ export function ActivityItem({
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1.5 text-xs font-medium hover:bg-accent"
               >
-                <ExternalLink className="h-3 w-3" />
+                <ExternalLink className="h-3 w-3" aria-hidden />
                 {truncateUrl(a.contentUrl)}
               </a>
             ) : null}
-
             {a.body ? (
               <pre className="whitespace-pre-wrap break-words rounded-md bg-muted px-3 py-2 text-xs leading-relaxed">
                 {a.body}
