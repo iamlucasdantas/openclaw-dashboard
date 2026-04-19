@@ -75,6 +75,36 @@ export async function costForAgentThisMonth(agentDbId: string): Promise<number> 
   return r._sum.costUsd ?? 0;
 }
 
+// Soma diária do dia atual e 6 anteriores (sempre 7 linhas).
+export async function costLast7Days(agentIds?: string[]) {
+  const now = new Date();
+  const base = startOfDay(now);
+  base.setDate(base.getDate() - 6); // inclui 7 dias
+  const events = await prisma.usageEvent.findMany({
+    where: {
+      occurredAt: { gte: base },
+      ...(agentIds ? { agentId: { in: agentIds } } : {}),
+    },
+    select: { occurredAt: true, costUsd: true },
+  });
+  const map = new Map<string, number>();
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - i);
+    map.set(d.toISOString().slice(0, 10), 0);
+  }
+  for (const e of events) {
+    const k = e.occurredAt.toISOString().slice(0, 10);
+    if (map.has(k)) map.set(k, (map.get(k) ?? 0) + e.costUsd);
+  }
+  return Array.from(map.entries()).map(([date, costUsd]) => ({
+    date,
+    costUsd,
+  }));
+}
+
+
 export async function costByTenantThisMonth(tenantIds?: string[]) {
   const rows = await prisma.usageEvent.groupBy({
     by: ["agentId"],

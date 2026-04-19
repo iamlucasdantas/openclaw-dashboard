@@ -1,15 +1,21 @@
-import Link from "next/link";
-import { DollarSign } from "lucide-react";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { copy, t } from "@/lib/copy";
 import { PageHeader } from "@/components/form";
 import { CostBarChart } from "@/components/cost-chart";
-import { formatTokens, formatUsd } from "@/lib/costs";
+import { SpentCard } from "@/components/costs/SpentCard";
+import { ProjectionCard } from "@/components/costs/ProjectionCard";
+import { LimitCard } from "@/components/costs/LimitCard";
+import { CostAlert } from "@/components/costs/CostAlert";
+import { WhoIsWorking } from "@/components/costs/WhoIsWorking";
+import { RecentDays } from "@/components/costs/RecentDays";
+import { USD_BRL_RATE } from "@/lib/currency";
+import { budgetSnapshot } from "@/lib/home-queries";
 import {
   costByAgentThisMonth,
   costByDayThisMonth,
-  costSummaryForAgents,
+  costLast7Days,
 } from "@/lib/costs-queries";
 
 export default async function ClientCostsPage() {
@@ -23,109 +29,58 @@ export default async function ClientCostsPage() {
   });
   const agentIds = agents.map((a) => a.id);
 
-  const [summary, byAgent, byDay] = await Promise.all([
-    costSummaryForAgents(agentIds),
+  const [budget, byAgent, byDay, last7] = await Promise.all([
+    budgetSnapshot(tenantIds),
     costByAgentThisMonth(agentIds),
     costByDayThisMonth(agentIds),
+    costLast7Days(agentIds),
   ]);
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Custos"
-        description="Uso e custo dos seus agentes. Dados de demonstração."
+        title={copy.costs.header.title}
+        description={copy.costs.header.subtitle}
       />
 
-      <div className="grid gap-4 sm:grid-cols-4">
-        <SummaryCard label="Hoje" value={formatUsd(summary.today)} />
-        <SummaryCard label="Semana" value={formatUsd(summary.week)} />
-        <SummaryCard label="Mês" value={formatUsd(summary.month)} highlight />
-        <SummaryCard
-          label="Tokens (mês)"
-          value={formatTokens(summary.totalTokensMonth)}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <SpentCard
+          spentUsd={budget.spentUsd}
+          budgetUsd={budget.budgetUsd}
+        />
+        <ProjectionCard
+          projectionUsd={budget.projectionUsd}
+          budgetUsd={budget.budgetUsd}
+        />
+        <LimitCard
+          spentUsd={budget.spentUsd}
+          budgetUsd={budget.budgetUsd}
         />
       </div>
 
-      <section className="rounded-lg border bg-card">
+      <CostAlert
+        pctOfBudget={budget.pctOfBudget}
+        budgetUsd={budget.budgetUsd}
+      />
+
+      <section className="rounded-xl border bg-card">
         <div className="border-b px-5 py-3">
-          <h2 className="text-sm font-semibold">Custo por dia (mês atual)</h2>
+          <h2 className="text-sm font-semibold">Consumo por dia (mês atual)</h2>
         </div>
         <div className="p-5">
           <CostBarChart points={byDay} />
         </div>
       </section>
 
-      <section className="rounded-lg border bg-card">
-        <div className="border-b px-5 py-3">
-          <h2 className="text-sm font-semibold">Custo por agente (mês)</h2>
-        </div>
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
-            <tr>
-              <th className="px-5 py-2 text-left">Agente</th>
-              <th className="px-5 py-2 text-right">Tokens</th>
-              <th className="px-5 py-2 text-right">Custo</th>
-            </tr>
-          </thead>
-          <tbody>
-            {byAgent.map((a) => (
-              <tr key={a.agentDbId} className="border-t">
-                <td className="px-5 py-2.5">
-                  <Link
-                    href={`/client/agents/${a.agentId}`}
-                    className="font-medium hover:underline"
-                  >
-                    {a.name}
-                  </Link>
-                  <div className="text-xs text-muted-foreground">
-                    {a.tenantName}
-                  </div>
-                </td>
-                <td className="px-5 py-2.5 text-right tabular-nums text-muted-foreground">
-                  {formatTokens(a.tokens)}
-                </td>
-                <td className="px-5 py-2.5 text-right tabular-nums font-medium">
-                  {formatUsd(a.costUsd)}
-                </td>
-              </tr>
-            ))}
-            {byAgent.length === 0 && (
-              <tr>
-                <td
-                  colSpan={3}
-                  className="px-5 py-8 text-center text-xs text-muted-foreground"
-                >
-                  Sem uso no período.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </section>
-    </div>
-  );
-}
+      <WhoIsWorking items={byAgent} agentHrefPrefix="/client/agents" />
 
-function SummaryCard({
-  label,
-  value,
-  highlight,
-}: {
-  label: string;
-  value: string;
-  highlight?: boolean;
-}) {
-  return (
-    <div
-      className={`rounded-lg border bg-card p-5 ${
-        highlight ? "ring-2 ring-primary/40" : ""
-      }`}
-    >
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">{label}</span>
-        <DollarSign className="h-4 w-4 text-muted-foreground" />
-      </div>
-      <div className="mt-3 text-2xl font-semibold tabular-nums">{value}</div>
+      <RecentDays points={last7} />
+
+      <p className="text-[11px] text-muted-foreground">
+        {t(copy.costs.disclaimer, {
+          rate: USD_BRL_RATE.toFixed(2).replace(".", ","),
+        })}
+      </p>
     </div>
   );
 }

@@ -229,23 +229,34 @@ export const copy = {
       subtitle: "Quanto seus assistentes usaram e o que está previsto.",
     },
     cards: {
-      spent: "Você gastou {value} este mês",
-      projection: "No ritmo atual, o mês fecha em {value}",
-      budget: "Limite definido: {value}",
+      spent: "Gasto no mês",
+      projection: "Previsão de fechamento",
+      projectionHint: "Se manter o ritmo atual",
+      limit: "Limite",
+      limitUsed: "{pct}% já usado",
+      noLimit: "Sem limite definido",
+      spent_fallback: "Você gastou {value} este mês",
       unlimited: "Sem limite definido",
     },
     alerts: {
+      ok: "Dentro do previsto.",
       warn: "Você já usou {pct}% do seu limite mensal.",
       critical: "Atenção: você passou do limite este mês.",
-      none: "Dentro do previsto.",
+    },
+    whoWorking: {
+      title: "Quem está trabalhando mais",
+      empty: "Nenhum assistente consumiu neste mês.",
+    },
+    history: {
+      title: "Últimos dias",
+      empty: "Sem consumo registrado no período.",
     },
     topAgents: {
       title: "Quem está trabalhando mais",
       empty: "Ainda sem uso neste mês.",
     },
-    history: {
-      title: "Últimos dias",
-    },
+    disclaimer:
+      "Valores convertidos de USD a R$ {rate} (cotação aproximada).",
   },
 
   // Home do cliente (Jobs-to-be-Done)

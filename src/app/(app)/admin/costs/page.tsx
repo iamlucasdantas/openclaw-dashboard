@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { DollarSign } from "lucide-react";
+import { DollarSign, TrendingUp } from "lucide-react";
 import { PageHeader } from "@/components/form";
 import { CostBarChart } from "@/components/cost-chart";
 import { BudgetBar } from "@/components/budget-bar";
+import { prisma } from "@/lib/prisma";
 import { formatTokens, formatUsd } from "@/lib/costs";
 import {
   costByAgentThisMonth,
@@ -10,13 +11,18 @@ import {
   costByTenantThisMonth,
   costSummaryForAgents,
 } from "@/lib/costs-queries";
+import { budgetSnapshot } from "@/lib/home-queries";
 
 export default async function AdminCostsPage() {
-  const [summary, byAgent, byTenant, byDay] = await Promise.all([
+  const tenants = await prisma.tenant.findMany({ select: { id: true } });
+  const tenantIds = tenants.map((t) => t.id);
+
+  const [summary, byAgent, byTenant, byDay, budget] = await Promise.all([
     costSummaryForAgents(),
     costByAgentThisMonth(),
     costByTenantThisMonth(),
     costByDayThisMonth(),
+    budgetSnapshot(tenantIds),
   ]);
 
   return (
@@ -26,13 +32,15 @@ export default async function AdminCostsPage() {
         description="Uso e custo de LLM. Dados de demonstração (30 dias, eventos sintéticos)."
       />
 
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <SummaryCard label="Hoje" value={formatUsd(summary.today)} />
         <SummaryCard label="Semana" value={formatUsd(summary.week)} />
         <SummaryCard label="Mês" value={formatUsd(summary.month)} highlight />
         <SummaryCard
-          label="Tokens (mês)"
-          value={formatTokens(summary.totalTokensMonth)}
+          label="Projeção fim de mês"
+          value={formatUsd(budget.projectionUsd)}
+          hint="se o ritmo se mantiver"
+          icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
         />
       </div>
 
@@ -157,10 +165,14 @@ function SummaryCard({
   label,
   value,
   highlight,
+  hint,
+  icon,
 }: {
   label: string;
   value: string;
   highlight?: boolean;
+  hint?: string;
+  icon?: React.ReactNode;
 }) {
   return (
     <div
@@ -170,9 +182,12 @@ function SummaryCard({
     >
       <div className="flex items-center justify-between">
         <span className="text-sm text-muted-foreground">{label}</span>
-        <DollarSign className="h-4 w-4 text-muted-foreground" />
+        {icon ?? <DollarSign className="h-4 w-4 text-muted-foreground" />}
       </div>
       <div className="mt-3 text-2xl font-semibold tabular-nums">{value}</div>
+      {hint ? (
+        <div className="mt-1 text-[11px] text-muted-foreground">{hint}</div>
+      ) : null}
     </div>
   );
 }
