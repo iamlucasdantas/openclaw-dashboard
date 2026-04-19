@@ -4,7 +4,7 @@ import { Pencil } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/form";
-import { DeleteButton } from "@/components/delete-button";
+import { TypeToConfirmButton } from "@/components/type-to-confirm";
 import { StatusPill } from "@/components/status-pill";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { BudgetBar } from "@/components/budget-bar";
@@ -72,11 +72,19 @@ export default async function TenantDetailPage({
                 Editar
               </Button>
             </Link>
-            <form action={deleteThisTenant}>
-              <DeleteButton
-                message={`Excluir cliente "${tenant.name}"? Isso remove ${agentCount} agente(s) e ${userCount} vínculo(s) de usuário. Esta ação não pode ser desfeita.`}
-              />
-            </form>
+            <TypeToConfirmButton
+              action={deleteThisTenant}
+              confirmText={tenant.name}
+              triggerLabel="Excluir cliente"
+              title={`Excluir o cliente "${tenant.name}"?`}
+              description="Esta ação é permanente. Todos os recursos do cliente serão apagados em cascata."
+              impactLines={[
+                `Apagar ${agentCount} agente(s)`,
+                `Remover ${userCount} vínculo(s) de usuário`,
+                "Apagar tarefas agendadas, habilidades e histórico",
+              ]}
+              ctaLabel={`Excluir ${tenant.name}`}
+            />
           </div>
         </div>
       </div>

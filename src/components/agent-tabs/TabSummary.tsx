@@ -3,7 +3,7 @@ import { Pencil } from "lucide-react";
 import { copy, t } from "@/lib/copy";
 import { formatBRL } from "@/lib/currency";
 import { Button } from "@/components/form";
-import { DeleteButton } from "@/components/delete-button";
+import { TypeToConfirmButton } from "@/components/type-to-confirm";
 import { BudgetBar } from "@/components/budget-bar";
 import { formatClock, formatDayLabel } from "@/lib/schedule";
 
@@ -16,6 +16,7 @@ type Props = {
   scheduleHref: string;
   onDeleteAction: () => Promise<void>;
   agentName: string;
+  deleteImpact?: string[];
 };
 
 export function TabSummary({
@@ -27,6 +28,7 @@ export function TabSummary({
   scheduleHref,
   onDeleteAction,
   agentName,
+  deleteImpact = [],
 }: Props) {
   return (
     <div className="space-y-6">
@@ -109,16 +111,16 @@ export function TabSummary({
               {copy.agent.actions.edit}
             </Button>
           </Link>
-          <form action={onDeleteAction}>
-            <DeleteButton
-              label={copy.agent.actions.delete}
-              message={
-                `Desligar o assistente "${agentName}"? ` +
-                `Isso vai parar todas as tarefas agendadas, cortar as integrações e apagar o histórico de 30 dias. ` +
-                `Esta ação não pode ser desfeita.`
-              }
-            />
-          </form>
+          <TypeToConfirmButton
+            action={onDeleteAction}
+            confirmText={agentName}
+            triggerLabel={copy.agent.actions.delete}
+            title={`Desligar o assistente "${agentName}"?`}
+            description="Esta ação não pode ser desfeita."
+            impactLines={deleteImpact}
+            ctaLabel={`Desligar ${agentName}`}
+            cancelLabel="Manter ativo"
+          />
         </div>
       </section>
     </div>

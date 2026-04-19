@@ -76,6 +76,13 @@ export async function createAgent(
     return { error: "Você não tem acesso a este cliente." };
   }
 
+  // Slugs de skills a instalar junto (se veio de um template).
+  const templateSlugsRaw = (formData.get("templateSkillSlugs") ?? "").toString();
+  const templateSlugs = templateSlugsRaw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
   let created;
   try {
     created = await prisma.agent.create({
@@ -97,6 +104,23 @@ export async function createAgent(
       return { fieldErrors: { tenantId: "Cliente inválido." } };
     }
     return { error: "Erro ao criar agente." };
+  }
+
+  // Instala as skills sugeridas pelo template, se existirem no catálogo.
+  if (templateSlugs.length > 0) {
+    const skills = await prisma.skill.findMany({
+      where: { slug: { in: templateSlugs } },
+      select: { id: true, slug: true },
+    });
+    if (skills.length > 0) {
+      await prisma.agentSkill.createMany({
+        data: skills.map((sk) => ({
+          agentId: created.id,
+          skillId: sk.id,
+          enabled: true,
+        })),
+      });
+    }
   }
 
   await audit({

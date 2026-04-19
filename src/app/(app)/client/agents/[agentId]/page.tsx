@@ -95,6 +95,17 @@ export default async function ClientAgentDetailPage({
       costForAgentThisMonth(agent.id),
       upcomingTasksForAgent(agent.id, 5),
     ]);
+    const impactLines: string[] = [];
+    const activeCrons = agent.crons.filter((c) => c.state === "active").length;
+    const activeSkills = agent.skills.filter((s) => s.enabled).length;
+    if (activeCrons > 0)
+      impactLines.push(`Parar ${activeCrons} tarefa(s) agendada(s)`);
+    if (activeSkills > 0)
+      impactLines.push(`Desconectar ${activeSkills} habilidade(s)`);
+    if (agent.github)
+      impactLines.push("Cortar a integração com o GitHub");
+    impactLines.push("Apagar o histórico dos últimos 30 dias");
+
     tabContent = (
       <TabSummary
         counts={counts}
@@ -105,6 +116,7 @@ export default async function ClientAgentDetailPage({
         scheduleHref="/client/crons"
         onDeleteAction={deleteThisAgent}
         agentName={agent.name}
+        deleteImpact={impactLines}
       />
     );
   } else if (tab === "activity") {

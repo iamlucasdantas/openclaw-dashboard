@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { effectiveStatus } from "@/lib/agent-status";
 import { Button } from "@/components/form";
-import { DeleteButton } from "@/components/delete-button";
+import { TypeToConfirmButton } from "@/components/type-to-confirm";
 import { StatusPill } from "@/components/status-pill";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { HeartbeatIntegration } from "@/components/heartbeat-integration";
@@ -90,11 +90,20 @@ export default async function AgentDetailPage({
                 Editar
               </Button>
             </Link>
-            <form action={deleteThisAgent}>
-              <DeleteButton
-                message={`Excluir agente "${agent.name}"? Esta ação não pode ser desfeita.`}
-              />
-            </form>
+            <TypeToConfirmButton
+              action={deleteThisAgent}
+              confirmText={agent.name}
+              triggerLabel="Excluir agente"
+              title={`Excluir o agente "${agent.name}"?`}
+              description="Esta ação é permanente e vai remover todos os dados vinculados ao agente."
+              impactLines={[
+                "Apagar todas as tarefas agendadas",
+                "Remover habilidades instaladas",
+                "Apagar histórico dos últimos 30 dias",
+                agent.github ? "Remover vínculo com o GitHub" : null,
+              ].filter((x): x is string => !!x)}
+              ctaLabel={`Excluir ${agent.name}`}
+            />
           </div>
         </div>
       </div>

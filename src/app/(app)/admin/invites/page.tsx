@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { headers } from "next/headers";
-import { Plus } from "lucide-react";
+import { Mail, Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { Button, PageHeader } from "@/components/form";
+import { EmptyState } from "@/components/empty-state";
 import { RevokeInviteButton } from "./revoke-button";
 import { CopyLinkButton } from "./copy-link-button";
 
@@ -103,14 +104,13 @@ export default async function InvitesPage() {
               );
             })}
             {invites.length === 0 && (
-              <tr>
-                <td
-                  colSpan={6}
-                  className="px-5 py-10 text-center text-sm text-muted-foreground"
-                >
-                  Nenhum convite emitido ainda.
-                </td>
-              </tr>
+              <EmptyState
+                colSpan={6}
+                icon={<Mail className="h-5 w-5" />}
+                title="Nenhum convite emitido ainda"
+                description="Convites geram um link único que o novo usuário usa para criar conta e entrar direto no painel."
+                action={{ label: "Gerar primeiro convite", href: "/admin/invites/new" }}
+              />
             )}
           </tbody>
         </table>

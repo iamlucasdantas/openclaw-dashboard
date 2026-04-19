@@ -1,6 +1,8 @@
+import { History } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { PageHeader } from "@/components/form";
+import { EmptyState } from "@/components/empty-state";
 
 const ACTION_LABELS: Record<string, string> = {
   "tenant.create": "Criou cliente",
@@ -93,14 +95,12 @@ export default async function AuditPage() {
               );
             })}
             {events.length === 0 && (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="px-5 py-10 text-center text-sm text-muted-foreground"
-                >
-                  Nenhum evento registrado ainda.
-                </td>
-              </tr>
+              <EmptyState
+                colSpan={5}
+                icon={<History className="h-5 w-5" />}
+                title="Nenhum evento ainda"
+                description="A auditoria registra toda mutação feita no painel (criar/editar/excluir). Assim que alguém fizer uma mudança, ela aparece aqui."
+              />
             )}
           </tbody>
         </table>

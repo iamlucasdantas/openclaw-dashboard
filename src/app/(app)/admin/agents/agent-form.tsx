@@ -32,6 +32,7 @@ export function AgentForm({
   initial,
   defaultTenantId,
   cancelHref,
+  templateDefaults,
 }: {
   mode: "create" | "edit";
   scope?: "admin" | "client";
@@ -47,6 +48,12 @@ export function AgentForm({
   };
   defaultTenantId?: string;
   cancelHref?: string;
+  templateDefaults?: {
+    name: string;
+    persona: string;
+    model: string;
+    skillSlugs: string[];
+  };
 }) {
   const action =
     mode === "edit" && initial
@@ -66,6 +73,13 @@ export function AgentForm({
   return (
     <form action={formAction} className="max-w-xl space-y-5">
       <input type="hidden" name="scope" value={scope} />
+      {templateDefaults?.skillSlugs ? (
+        <input
+          type="hidden"
+          name="templateSkillSlugs"
+          value={templateDefaults.skillSlugs.join(",")}
+        />
+      ) : null}
 
       <Field label="Cliente (tenant)" error={state.fieldErrors?.tenantId}>
         {tenantLocked && selectedTenant ? (
@@ -94,7 +108,7 @@ export function AgentForm({
       <Field label="Nome amigável" error={state.fieldErrors?.name}>
         <Input
           name="name"
-          defaultValue={initial?.name}
+          defaultValue={initial?.name ?? templateDefaults?.name ?? ""}
           required
           placeholder="Acme Support WA"
         />
@@ -116,17 +130,42 @@ export function AgentForm({
       <Field label="Persona" error={state.fieldErrors?.persona}>
         <Textarea
           name="persona"
-          defaultValue={initial?.persona ?? ""}
-          rows={3}
+          defaultValue={
+            initial?.persona ?? templateDefaults?.persona ?? ""
+          }
+          rows={4}
           placeholder="Resumo do comportamento e responsabilidades do agente."
         />
       </Field>
+
+      {templateDefaults?.skillSlugs && templateDefaults.skillSlugs.length > 0 ? (
+        <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+          <p className="font-medium text-foreground">
+            Este modelo sugere instalar:
+          </p>
+          <ul className="mt-1 flex flex-wrap gap-1">
+            {templateDefaults.skillSlugs.map((s) => (
+              <li
+                key={s}
+                className="rounded-full bg-background px-2 py-0.5 text-[11px] border"
+              >
+                {s}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-[11px]">
+            Você pode instalar/remover depois em <strong>Conexões</strong>.
+          </p>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-4">
         <Field label="Modelo LLM" error={state.fieldErrors?.model}>
           <Input
             name="model"
-            defaultValue={initial?.model ?? ""}
+            defaultValue={
+              initial?.model ?? templateDefaults?.model ?? ""
+            }
             placeholder="claude-opus-4-7"
           />
         </Field>
