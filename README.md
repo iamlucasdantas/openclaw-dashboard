@@ -76,6 +76,10 @@ curl -X POST http://localhost:3100/api/agents/lucas-ops-01/heartbeat \
 A página do agente passa a mostrar **online** com a versão reportada.
 Se parar de bater, fica **sem heartbeat** (>2 min) ou **offline** (>10 min).
 
+Para integração permanente (o agente mantendo o status vivo sozinho),
+veja a seção [Conectando seus agentes](#-conectando-seus-agentes-nodejs)
+abaixo.
+
 ### 6. Limites de custo
 
 Acme Corp já vem com orçamento mensal `$100` seedado. Entre em
@@ -93,6 +97,141 @@ barras ficam verdes, amarelas (80%+) ou vermelhas (>100%).
 ### 8. Auditoria
 
 Tudo acima aparece em `/admin/audit` com ator, ação, entidade e diff em JSON.
+
+## 🔌 Conectando seus agentes (Node.js)
+
+> Para cada agente que você quer ver no painel, o código do agente precisa
+> bater no endpoint de heartbeat. Sem isso o painel não tem como saber se ele
+> está vivo — nem `pm2 status` resolveria, pois o processo pode estar de pé
+> mas o agente travado. **Status no painel = heartbeat do OpenClaw.**
+
+### Passo 1 — Cadastrar o agente no painel
+
+1. Faça login como admin.
+2. Vá em `/admin/agents/new` (ou toggle para **Cliente** → **Meus agentes** →
+   **Novo agente** se for você mesmo o cliente).
+3. Preencha:
+   - **Nome amigável** (ex: "Suporte Telegram")
+   - **agentId** único: minúsculo, com hífens (ex: `lucas-tg-suporte-01`)
+   - **Cliente** (tenant a que o agente pertence)
+   - **Modelo LLM** (ex: `claude-sonnet-4-6`)
+4. Clique em **Criar agente**.
+
+### Passo 2 — Copiar o secret
+
+Na página de detalhe do agente recém-criado, role até a seção
+**Integração · Heartbeat**:
+
+1. Clique no ícone 👁 para **revelar** o secret (começa com `ocs_…`).
+2. Clique no ícone 📋 para **copiar**.
+3. Anote em lugar seguro a dupla `agentId` + `secret`.
+
+Se em algum momento você suspeitar que o secret vazou, use o ícone 🔄 na mesma
+tela para **rotacionar** — isso invalida o antigo.
+
+### Passo 3 — Baixar o módulo de heartbeat
+
+O repositório traz duas versões prontas em `examples/`:
+
+| Arquivo | Quando usar |
+|---------|-------------|
+| [`examples/openclaw-heartbeat.js`](examples/openclaw-heartbeat.js) | Projetos CommonJS (usam `require`) |
+| [`examples/openclaw-heartbeat.mjs`](examples/openclaw-heartbeat.mjs) | Projetos ESM (`"type": "module"` no `package.json`) |
+
+Copie o arquivo apropriado para dentro do projeto do seu agente (ao lado do
+`index.js`/`bot.js`, por exemplo). Sem dependências externas — só Node 18+.
+
+### Passo 4 — Plugar no entry point do bot
+
+No arquivo que sobe o seu bot (`index.js`, `bot.js`, etc.), adicione 3 linhas:
+
+**CommonJS (`require`)**
+
+```js
+const { createHeartbeat } = require("./openclaw-heartbeat");
+
+createHeartbeat({
+  dashboardUrl: process.env.OPENCLAW_URL,
+  agentId:      process.env.OPENCLAW_AGENT_ID,
+  secret:       process.env.OPENCLAW_SECRET,
+  version:      process.env.npm_package_version || "1.0.0",
+}).start();
+
+// …resto do seu bot (bot.launch(), etc.)
+```
+
+**ESM (`import`)**
+
+```js
+import { createHeartbeat } from "./openclaw-heartbeat.mjs";
+
+createHeartbeat({
+  dashboardUrl: process.env.OPENCLAW_URL,
+  agentId:      process.env.OPENCLAW_AGENT_ID,
+  secret:       process.env.OPENCLAW_SECRET,
+  version:      process.env.npm_package_version || "1.0.0",
+}).start();
+```
+
+### Passo 5 — Variáveis de ambiente do bot
+
+No `.env` do **projeto do agente** (não confundir com o `.env` do painel):
+
+```env
+OPENCLAW_URL=http://localhost:3100
+OPENCLAW_AGENT_ID=lucas-tg-suporte-01
+OPENCLAW_SECRET=ocs_xxxxxxxxxxxxxxxx
+```
+
+- Se painel e agente rodam na **mesma VPS**, use `http://localhost:3100`.
+- Se rodam em máquinas diferentes, use o IP/domínio público do painel.
+
+Repita o processo **para cada bot**: cada agente tem seu próprio `agentId` e
+`secret`.
+
+### Passo 6 — Reiniciar o bot
+
+```bash
+pm2 restart <seu-bot>
+# ou simplesmente pare e inicie o processo de novo
+```
+
+Em até 60 segundos o painel marca o agente como **online** e passa a mostrar
+a versão reportada + horário do último heartbeat.
+
+### Como o status é calculado
+
+| Tempo desde o último heartbeat | Status exibido no painel |
+|--------------------------------|--------------------------|
+| < 2 minutos                    | 🟢 **online**            |
+| 2–10 minutos                   | 🟡 **sem heartbeat**     |
+| > 10 minutos                   | ⚪ **offline**           |
+
+Ao receber `SIGINT`/`SIGTERM` (Ctrl+C, `pm2 stop`), o módulo envia um
+heartbeat final com `status: "offline"` antes de sair — assim o painel mostra
+offline imediatamente, sem esperar os 10 minutos.
+
+### Troubleshooting
+
+| Sintoma | Provável causa |
+|---------|----------------|
+| `heartbeat 401` | Secret errado ou agentId errado no `.env` do bot |
+| `heartbeat erro: fetch failed` | Bot não alcança o painel — cheque `OPENCLAW_URL` e firewall |
+| Painel mostra offline mesmo com bot rodando | Bot caiu antes de rodar `hb.start()`; cheque logs (`pm2 logs`) |
+| Node reclama "fetch is not defined" | Node < 18; atualize para 18+ ou instale `node-fetch` |
+
+### Próxima camada (em aberto)
+
+Heartbeat informa **se** o agente está vivo. Para registrar **o que ele está
+fazendo** (ingestão de uso, execução de crons, atividades de skills), há
+endpoints adicionais previstos mas ainda não implementados:
+
+- `POST /api/agents/:id/usage` — eventos de uso de LLM (tokens/custo real)
+- `POST /api/agents/:id/cron-run` — resultado de execução de cron
+- `POST /api/agents/:id/skill-activity` — atividade de skill ("enviou email X")
+
+Hoje essas atividades aparecem no painel a partir de dados seedados.
+Quando precisar da ingestão real, me avisa.
 
 ## Estrutura
 
@@ -128,8 +267,11 @@ src/
 prisma/
   schema.prisma           # Tenant, User, Membership, Agent, Invite, AuditLog,
                           # UsageEvent, GithubIntegration, GithubRepo,
-                          # Skill, AgentSkill, AgentCron
+                          # Skill, AgentSkill, AgentCron, SkillActivity
   seed.ts
+examples/
+  openclaw-heartbeat.js   # módulo pronto (CommonJS) para colar no agente
+  openclaw-heartbeat.mjs  # versão ESM
 ```
 
 ## Segurança e isolamento
