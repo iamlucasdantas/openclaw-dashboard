@@ -5,6 +5,7 @@ import { formatBRL } from "@/lib/currency";
 import { Button } from "@/components/form";
 import { TypeToConfirmButton } from "@/components/type-to-confirm";
 import { BudgetBar } from "@/components/budget-bar";
+import { CronsCalendar, type CalendarCron } from "@/components/crons-calendar";
 import { formatClock, formatDayLabel } from "@/lib/schedule";
 
 type Props = {
@@ -12,6 +13,8 @@ type Props = {
   usedThisMonthUsd: number;
   budgetUsd: number | null;
   upcoming: { cronId: string; name: string; when: Date }[];
+  crons: CalendarCron[];
+  agentHrefPrefix: "/admin/agents" | "/client/agents";
   editHref: string;
   scheduleHref: string;
   onDeleteAction: () => Promise<void>;
@@ -24,6 +27,8 @@ export function TabSummary({
   usedThisMonthUsd,
   budgetUsd,
   upcoming,
+  crons,
+  agentHrefPrefix,
   editHref,
   scheduleHref,
   onDeleteAction,
@@ -99,6 +104,16 @@ export function TabSummary({
           </Link>
         </div>
       </section>
+
+      {crons.length > 0 ? (
+        <section>
+          <h2 className="mb-3 text-sm font-semibold">Calendário do assistente</h2>
+          <CronsCalendar
+            crons={crons}
+            scopeLinks={{ agentHrefPrefix }}
+          />
+        </section>
+      ) : null}
 
       <section>
         <h2 className="mb-2 text-sm font-semibold">

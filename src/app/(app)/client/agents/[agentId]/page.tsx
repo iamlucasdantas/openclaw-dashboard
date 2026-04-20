@@ -117,6 +117,14 @@ export default async function ClientAgentDetailPage({
         onDeleteAction={deleteThisAgent}
         agentName={agent.name}
         deleteImpact={impactLines}
+        crons={agent.crons.map((c) => ({
+          id: c.id,
+          name: c.name,
+          schedule: c.schedule,
+          state: c.state,
+          agent: { agentId: agent.agentId, name: agent.name },
+        }))}
+        agentHrefPrefix="/client/agents"
       />
     );
   } else if (tab === "activity") {
