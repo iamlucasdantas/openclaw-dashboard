@@ -20,6 +20,7 @@ model Tenant {
   agents      Agent[]
   memberships Membership[]
   invites     Invite[]
+  prospecting ProspectingCampaign[]
 }
 
 // Usuário do painel. Pode ser admin (global) e/ou membro de um ou mais tenants.
@@ -226,4 +227,86 @@ model AuditLog {
 
   @@index([createdAt])
   @@index([entityType, entityId])
+}
+
+// Campanha de prospecção — encontra novos contatos automaticamente
+// com base em localização + nichos e sincroniza com uma subconta do
+// HighLevel (locationId + API key armazenados por tenant).
+model ProspectingCampaign {
+  id              String   @id @default(cuid())
+  tenantId        String
+  name            String
+  state           String   @default("active") // active | paused | disabled
+
+  // HighLevel (subconta do cliente)
+  ghlLocationId   String?
+  ghlApiKeyHint   String?  // últimos 4 chars para verificação visual (nunca plain)
+  ghlApiKey       String?  // armazenado cru por ora — rotacionável. Em produção: envelope-encrypt.
+
+  // Busca
+  areaLabel       String   // endereço ou cidade legível ("Curitiba - PR")
+  areaLat         Float?
+  areaLng         Float?
+  radiusKm        Float    @default(10)
+  niches          String   // JSON array de strings ["salões", "barbearias"]
+
+  // Filtros (JSON com flags)
+  filters         String   @default("{}")
+
+  // Mapeamento de campos: JSON { sourceField: "ghlTarget" }
+  fieldMap        String   @default("{}")
+
+  // Agendamento
+  schedule        String   @default("daily")      // daily | weekly | manual
+  scheduleTime    String   @default("09:00")      // HH:MM
+  nextRunAt       DateTime?
+  lastRunAt       DateTime?
+
+  // Auto-expansão
+  autoExpand      Boolean  @default(true)
+  expandAfterDays Int      @default(3)
+  expandStepKm    Float    @default(5)
+  maxRadiusKm     Float    @default(100)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  leads  ProspectingLead[]
+
+  @@index([tenantId])
+}
+
+// Lead encontrado por uma campanha de prospecção.
+model ProspectingLead {
+  id              String   @id @default(cuid())
+  campaignId      String
+  discoveredAt    DateTime @default(now())
+
+  businessName    String
+  niche           String?
+  address         String?
+  city            String?
+  state           String?
+  lat             Float?
+  lng             Float?
+
+  websiteUrl      String?
+  gbpUrl          String?
+  instagramUrl    String?
+  facebookUrl     String?
+
+  contactName     String?
+  contactEmail    String?
+  contactPhone    String?
+
+  // Sincronização com HighLevel
+  syncStatus      String   @default("pending")    // pending | synced | error
+  ghlContactId    String?
+  syncError       String?
+  syncedAt        DateTime?
+
+  campaign ProspectingCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId, discoveredAt])
 }
