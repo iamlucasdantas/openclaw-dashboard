@@ -213,7 +213,29 @@ export function CronsCalendar({
                   ) : null}
                 </div>
 
-                <div className="space-y-0.5">
+                {/* Mobile: só bolinhas coloridas (1 por tarefa, até 5) */}
+                <div className="flex flex-wrap gap-1 sm:hidden" aria-hidden>
+                  {tasks.slice(0, 5).map((t, ix) => {
+                    const c = t.cron.agent
+                      ? colorForId(t.cron.agent.agentId)
+                      : null;
+                    return (
+                      <span
+                        key={ix}
+                        className="h-2 w-2 rounded-full"
+                        style={c ? { backgroundColor: c.dot } : undefined}
+                      />
+                    );
+                  })}
+                  {tasks.length > 5 ? (
+                    <span className="text-[9px] font-medium text-muted-foreground">
+                      +{tasks.length - 5}
+                    </span>
+                  ) : null}
+                </div>
+
+                {/* Desktop/tablet: chips com horário + nome */}
+                <div className="hidden space-y-0.5 sm:block">
                   {tasks.slice(0, 3).map((t, ix) => {
                     const c = t.cron.agent
                       ? colorForId(t.cron.agent.agentId)
