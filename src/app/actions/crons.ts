@@ -175,6 +175,46 @@ export async function toggleCronState(id: string, nextState: "active" | "paused"
   revalidatePath("/admin/crons");
 }
 
+// Remove tarefas duplicadas (mesmo agentId + name + schedule) mantendo a
+// mais recente. Usado pelo banner de "duplicatas detectadas" em /admin/crons.
+export async function deleteDuplicatedCrons() {
+  const session = await requireSession();
+  if (!session.user.isAdmin) throw new Error("Acesso negado.");
+
+  const all = await prisma.agentCron.findMany({
+    select: {
+      id: true,
+      agentId: true,
+      name: true,
+      schedule: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const seen = new Set<string>();
+  const toDelete: string[] = [];
+  for (const c of all) {
+    const k = `${c.agentId}::${c.name}::${c.schedule}`;
+    if (seen.has(k)) toDelete.push(c.id);
+    else seen.add(k);
+  }
+
+  if (toDelete.length === 0) return { deleted: 0 };
+
+  await prisma.agentCron.deleteMany({ where: { id: { in: toDelete } } });
+
+  await audit({
+    action: "cron.dedupe",
+    entityType: "cron",
+    entityId: "bulk",
+    meta: { removed: toDelete.length },
+  });
+
+  revalidatePath("/admin/crons");
+  return { deleted: toDelete.length };
+}
+
 export async function deleteCron(id: string) {
   const existing = await prisma.agentCron.findUnique({
     where: { id },

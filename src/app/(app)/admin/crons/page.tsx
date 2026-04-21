@@ -8,16 +8,37 @@ import { humanizeSchedule } from "@/lib/schedule";
 import { CronsAgenda } from "@/components/crons-agenda";
 import { CronsCalendar } from "@/components/crons-calendar";
 import { CronViewToggle } from "@/components/cron-view-toggle";
+import { DedupeCronsBanner } from "@/components/dedupe-crons-button";
 import { getCronView } from "@/app/actions/view-mode";
 
 export default async function AdminCronsPage() {
-  const [crons, view] = await Promise.all([
+  const [rawCrons, view] = await Promise.all([
     prisma.agentCron.findMany({
       include: { agent: { include: { tenant: true } } },
-      orderBy: [{ agent: { tenant: { name: "asc" } } }, { name: "asc" }],
+      orderBy: [{ createdAt: "desc" }],
     }),
     getCronView(),
   ]);
+
+  // Dedupe defensivo: se houver duplicatas de (agentId+name+schedule) no banco,
+  // a UI mostra só o mais recente e o banner oferece limpeza.
+  const seen = new Set<string>();
+  let duplicates = 0;
+  const crons: typeof rawCrons = [];
+  for (const c of rawCrons) {
+    const k = `${c.agentId}::${c.name}::${c.schedule}`;
+    if (seen.has(k)) {
+      duplicates++;
+      continue;
+    }
+    seen.add(k);
+    crons.push(c);
+  }
+  // Reordena pra apresentação estável: cliente depois nome
+  crons.sort((a, b) => {
+    const t = a.agent.tenant.name.localeCompare(b.agent.tenant.name);
+    return t !== 0 ? t : a.name.localeCompare(b.name);
+  });
 
   const counts = {
     active: crons.filter((c) => c.state === "active").length,
@@ -34,6 +55,8 @@ export default async function AdminCronsPage() {
           <CronViewToggle current={view} pathname="/admin/crons" />
         }
       />
+
+      <DedupeCronsBanner duplicates={duplicates} />
 
       {crons.length === 0 ? (
         <div className="rounded-lg border bg-card">

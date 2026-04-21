@@ -22,6 +22,8 @@ export default async function NewAgentPage({
     : undefined;
 
   const template = getTemplate(params.template);
+  const unknownTemplate =
+    params.template !== undefined && params.template !== "" && !template;
   const showForm = !!template || params.scratch !== undefined;
 
   return (
@@ -40,6 +42,13 @@ export default async function NewAgentPage({
             : "Escolha um modelo ou comece do zero."
         }
       />
+      {unknownTemplate ? (
+        <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+          Template <code>{params.template}</code> não foi encontrado. Escolha
+          um modelo abaixo ou clique em <strong>criar do zero</strong>.
+        </div>
+      ) : null}
+
       {showForm ? (
         <AgentForm
           mode="create"

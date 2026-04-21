@@ -21,6 +21,11 @@ export default async function NewClientAgentPage({
 
   const sp = await searchParams;
   const template = getTemplate(sp.template);
+  // Query veio com template=XXX, mas XXX não existe no catálogo → galeria
+  // com aviso. "template=blank" cai aqui também (é um ID inválido); se quiser
+  // começar do zero explicitamente, use ?scratch.
+  const unknownTemplate =
+    sp.template !== undefined && sp.template !== "" && !template;
   const showForm = !!template || sp.scratch !== undefined;
 
   const tenants = await prisma.tenant.findMany({
@@ -48,6 +53,13 @@ export default async function NewClientAgentPage({
             : "Escolha um modelo ou crie do zero."
         }
       />
+
+      {unknownTemplate ? (
+        <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+          Template <code>{sp.template}</code> não foi encontrado. Escolha um
+          modelo abaixo ou clique em <strong>criar do zero</strong>.
+        </div>
+      ) : null}
 
       {showForm ? (
         <AgentForm

@@ -71,7 +71,13 @@ export function AgentForm({
     cancelHref ?? (scope === "client" ? "/client/agents" : "/admin/agents");
 
   return (
-    <form action={formAction} className="max-w-xl space-y-5">
+    <form
+      action={formAction}
+      /* key força re-mount quando troca de agente — evita React reaproveitar
+         defaultValue de um Textarea/Input anterior (bug da "persona vazia") */
+      key={initial?.id ?? "create"}
+      className="max-w-xl space-y-5"
+    >
       <input type="hidden" name="scope" value={scope} />
       {templateDefaults?.skillSlugs ? (
         <input
@@ -127,7 +133,15 @@ export function AgentForm({
         />
       </Field>
 
-      <Field label="Persona" error={state.fieldErrors?.persona}>
+      <Field
+        label="Persona"
+        hint={
+          mode === "edit" && !initial?.persona
+            ? "Este assistente ainda não tem persona. Descreva o comportamento esperado — é o que guia as respostas."
+            : "O que ele faz, o tom de voz, os limites."
+        }
+        error={state.fieldErrors?.persona}
+      >
         <Textarea
           name="persona"
           defaultValue={
