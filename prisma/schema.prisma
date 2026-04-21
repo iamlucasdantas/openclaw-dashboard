@@ -1,0 +1,312 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Tenant = cliente. Um cliente pode ter vários agentes e vários usuários.
+model Tenant {
+  id                 String   @id @default(cuid())
+  slug               String   @unique
+  name               String
+  description        String?
+  monthlyBudgetUsd   Float?   // limite mensal agregado (opcional)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  agents      Agent[]
+  memberships Membership[]
+  invites     Invite[]
+  prospecting ProspectingCampaign[]
+}
+
+// Usuário do painel. Pode ser admin (global) e/ou membro de um ou mais tenants.
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  isAdmin      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  memberships     Membership[]
+  createdInvites  Invite[]     @relation("InviteCreator")
+}
+
+// Convite para criar conta no painel. O token fica em texto (prototipo):
+// admin precisa ver o link para copiar, já que não há SMTP.
+model Invite {
+  id         String    @id @default(cuid())
+  email      String
+  token      String    @unique
+  isAdmin    Boolean   @default(false)
+  tenantId   String?
+  createdBy  String
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  tenant  Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  creator User    @relation("InviteCreator", fields: [createdBy], references: [id])
+
+  @@index([email])
+}
+
+// Vínculo usuário <-> tenant (role client, com possibilidade de escopo futuro).
+model Membership {
+  id        String   @id @default(cuid())
+  userId    String
+  tenantId  String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tenantId])
+}
+
+model Agent {
+  id              String    @id @default(cuid())
+  agentId         String    @unique
+  name            String
+  tenantId        String
+  persona         String?
+  status          String    @default("offline")
+  model           String?
+  lastHeartbeatAt DateTime?
+  lastVersion     String?
+  heartbeatSecret String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  monthlyBudgetUsd Float?
+
+  tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  usageEvents UsageEvent[]
+  github      GithubIntegration?
+  skills      AgentSkill[]
+  crons       AgentCron[]
+}
+
+// Catálogo de skills disponíveis. Global (não multi-tenant): todo
+// cliente escolhe a partir deste catálogo o que instalar nos agentes.
+model Skill {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  category    String   // integration | llm | utility | ...
+  description String?
+  source      String?  // ex: "clawhub" | "local"
+  version     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  installations AgentSkill[]
+}
+
+// Skill instalada em um agente específico.
+model AgentSkill {
+  id        String   @id @default(cuid())
+  agentId   String
+  skillId   String
+  enabled   Boolean  @default(true)
+  config    String?  // JSON stringified
+  createdAt DateTime @default(now())
+
+  agent      Agent            @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  skill      Skill            @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  activities SkillActivity[]
+
+  @@unique([agentId, skillId])
+}
+
+// Atividade registrada por uma skill instalada — usado para histórico
+// legível por cliente ("enviou email", "abriu PR", "respondeu atendimento").
+// Conteúdo (body/image/link) permite "ver exatamente o que foi feito".
+// Retenção de 30 dias — entradas mais antigas são limpas automaticamente.
+model SkillActivity {
+  id            String   @id @default(cuid())
+  agentSkillId  String
+  summary       String
+  body          String?  // texto longo gerado/enviado
+  contentType   String?  // text | image | link | file
+  contentUrl    String?  // URL da imagem, link, ou arquivo
+  status        String   @default("ok") // ok | error | warning
+  occurredAt    DateTime
+  createdAt     DateTime @default(now())
+
+  agentSkill AgentSkill @relation(fields: [agentSkillId], references: [id], onDelete: Cascade)
+
+  @@index([occurredAt])
+  @@index([agentSkillId, occurredAt])
+}
+
+// Cron / tarefa agendada por agente.
+model AgentCron {
+  id             String    @id @default(cuid())
+  agentId        String
+  name           String
+  schedule       String    // cron expression ou "@hourly" etc.
+  command        String    // o que o agente vai rodar/prompt/skill
+  state          String    @default("active") // active | paused | disabled
+  lastRunAt      DateTime?
+  lastRunStatus  String?   // ok | error
+  lastRunMessage String?
+  nextRunAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+}
+
+// Registro de como o agente se integra ao GitHub. O dashboard NÃO
+// armazena o token — apenas metadados (modo, escopo, preview dos
+// últimos 4 chars digitados para confirmação visual).
+model GithubIntegration {
+  id            String   @id @default(cuid())
+  agentId       String   @unique
+  mode          String   // gh-cli | mcp | api
+  scope         String   // read | issues | prs | admin
+  org           String?
+  defaultBranch String?
+  tokenPreview  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  agent Agent        @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  repos GithubRepo[]
+}
+
+model GithubRepo {
+  id            String   @id @default(cuid())
+  integrationId String
+  owner         String
+  name          String
+  role          String   // read | write | admin
+  createdAt     DateTime @default(now())
+
+  integration GithubIntegration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@unique([integrationId, owner, name])
+}
+
+// Evento append-only de uso de LLM. Cada chamada do agente pode gerar
+// um ou mais events. Usado para agregações no painel de custos.
+model UsageEvent {
+  id           String   @id @default(cuid())
+  agentId      String
+  model        String
+  inputTokens  Int
+  outputTokens Int
+  costUsd      Float
+  occurredAt   DateTime
+  createdAt    DateTime @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([occurredAt])
+  @@index([agentId, occurredAt])
+}
+
+// Log de todas as alterações significativas feitas via painel.
+// actor* são snapshots: mantemos mesmo se o usuário for removido.
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actorName  String?
+  actorEmail String?
+  action     String
+  entityType String
+  entityId   String?
+  meta       String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([entityType, entityId])
+}
+
+// Campanha de prospecção — encontra novos contatos automaticamente
+// com base em localização + nichos e sincroniza com uma subconta do
+// HighLevel (locationId + API key armazenados por tenant).
+model ProspectingCampaign {
+  id              String   @id @default(cuid())
+  tenantId        String
+  name            String
+  state           String   @default("active") // active | paused | disabled
+
+  // HighLevel (subconta do cliente)
+  ghlLocationId   String?
+  ghlApiKeyHint   String?  // últimos 4 chars para verificação visual (nunca plain)
+  ghlApiKey       String?  // armazenado cru por ora — rotacionável. Em produção: envelope-encrypt.
+
+  // Busca
+  areaLabel       String   // endereço ou cidade legível ("Curitiba - PR")
+  areaLat         Float?
+  areaLng         Float?
+  radiusKm        Float    @default(10)
+  niches          String   // JSON array de strings ["salões", "barbearias"]
+
+  // Filtros (JSON com flags)
+  filters         String   @default("{}")
+
+  // Mapeamento de campos: JSON { sourceField: "ghlTarget" }
+  fieldMap        String   @default("{}")
+
+  // Agendamento
+  schedule        String   @default("daily")      // daily | weekly | manual
+  scheduleTime    String   @default("09:00")      // HH:MM
+  nextRunAt       DateTime?
+  lastRunAt       DateTime?
+
+  // Auto-expansão
+  autoExpand      Boolean  @default(true)
+  expandAfterDays Int      @default(3)
+  expandStepKm    Float    @default(5)
+  maxRadiusKm     Float    @default(100)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  leads  ProspectingLead[]
+
+  @@index([tenantId])
+}
+
+// Lead encontrado por uma campanha de prospecção.
+model ProspectingLead {
+  id              String   @id @default(cuid())
+  campaignId      String
+  discoveredAt    DateTime @default(now())
+
+  businessName    String
+  niche           String?
+  address         String?
+  city            String?
+  state           String?
+  lat             Float?
+  lng             Float?
+
+  websiteUrl      String?
+  gbpUrl          String?
+  instagramUrl    String?
+  facebookUrl     String?
+
+  contactName     String?
+  contactEmail    String?
+  contactPhone    String?
+
+  // Sincronização com HighLevel
+  syncStatus      String   @default("pending")    // pending | synced | error
+  ghlContactId    String?
+  syncError       String?
+  syncedAt        DateTime?
+
+  campaign ProspectingCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId, discoveredAt])
+}
