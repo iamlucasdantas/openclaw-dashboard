@@ -5,7 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { effectiveStatus } from "@/lib/agent-status";
 import { Button } from "@/components/form";
-import { TypeToConfirmButton } from "@/components/type-to-confirm";
 import { StatusPill } from "@/components/status-pill";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { HeartbeatIntegration } from "@/components/heartbeat-integration";
@@ -15,7 +14,6 @@ import { CronsManager } from "@/components/crons-manager";
 import { BudgetBar } from "@/components/budget-bar";
 import { AgentBudgetForm } from "@/components/budget-form";
 import { costForAgentThisMonth } from "@/lib/costs-queries";
-import { deleteAgent } from "@/app/actions/agents";
 
 export default async function AgentDetailPage({
   params,
@@ -48,12 +46,6 @@ export default async function AgentDetailPage({
   if (!agent) notFound();
 
   const usedThisMonth = await costForAgentThisMonth(agent.id);
-
-  const deleteThisAgent = async () => {
-    "use server";
-    await deleteAgent(agent.id);
-  };
-
   const eff = effectiveStatus(agent);
 
   return (
@@ -90,20 +82,8 @@ export default async function AgentDetailPage({
                 Editar
               </Button>
             </Link>
-            <TypeToConfirmButton
-              action={deleteThisAgent}
-              confirmText={agent.name}
-              triggerLabel="Excluir agente"
-              title={`Excluir o agente "${agent.name}"?`}
-              description="Esta ação é permanente e vai remover todos os dados vinculados ao agente."
-              impactLines={[
-                "Apagar todas as tarefas agendadas",
-                "Remover habilidades instaladas",
-                "Apagar histórico dos últimos 30 dias",
-                agent.github ? "Remover vínculo com o GitHub" : null,
-              ].filter((x): x is string => !!x)}
-              ctaLabel={`Excluir ${agent.name}`}
-            />
+            {/* Excluir foi movido para /edit → Zona de perigo.
+                Ação destrutiva não fica no topo (padrão GitHub/Stripe). */}
           </div>
         </div>
       </div>

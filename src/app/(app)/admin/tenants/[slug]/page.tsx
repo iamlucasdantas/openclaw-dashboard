@@ -4,14 +4,12 @@ import { Pencil } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/form";
-import { TypeToConfirmButton } from "@/components/type-to-confirm";
 import { StatusPill } from "@/components/status-pill";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { BudgetBar } from "@/components/budget-bar";
 import { TenantBudgetForm } from "@/components/budget-form";
 import { effectiveStatus } from "@/lib/agent-status";
 import { costByTenantThisMonth } from "@/lib/costs-queries";
-import { deleteTenant } from "@/app/actions/tenants";
 
 export default async function TenantDetailPage({
   params,
@@ -35,11 +33,6 @@ export default async function TenantDetailPage({
   const tenantCosts = await costByTenantThisMonth([tenant.id]);
   const myCost = tenantCosts.find((t) => t.tenantId === tenant.id);
   const usedThisMonth = myCost?.costUsd ?? 0;
-
-  const deleteThisTenant = async () => {
-    "use server";
-    await deleteTenant(tenant.id);
-  };
 
   return (
     <div className="space-y-6">
@@ -72,19 +65,7 @@ export default async function TenantDetailPage({
                 Editar
               </Button>
             </Link>
-            <TypeToConfirmButton
-              action={deleteThisTenant}
-              confirmText={tenant.name}
-              triggerLabel="Excluir cliente"
-              title={`Excluir o cliente "${tenant.name}"?`}
-              description="Esta ação é permanente. Todos os recursos do cliente serão apagados em cascata."
-              impactLines={[
-                `Apagar ${agentCount} agente(s)`,
-                `Remover ${userCount} vínculo(s) de usuário`,
-                "Apagar tarefas agendadas, habilidades e histórico",
-              ]}
-              ctaLabel={`Excluir ${tenant.name}`}
-            />
+            {/* Excluir foi movido para /edit → Zona de perigo. */}
           </div>
         </div>
       </div>

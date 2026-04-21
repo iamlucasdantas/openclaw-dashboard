@@ -4,12 +4,40 @@ import { prisma } from "@/lib/prisma";
 import { Button, PageHeader } from "@/components/form";
 import { StatusPill } from "@/components/status-pill";
 import { EmptyState } from "@/components/empty-state";
+import { TableFilters } from "@/components/table-filters";
 import { effectiveStatus } from "@/lib/agent-status";
 
-export default async function AdminAgentsPage() {
-  const agents = await prisma.agent.findMany({
-    include: { tenant: true },
-    orderBy: [{ tenant: { name: "asc" } }, { name: "asc" }],
+export default async function AdminAgentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; tenant?: string; status?: string }>;
+}) {
+  const sp = await searchParams;
+  const q = (sp.q ?? "").trim().toLowerCase();
+
+  const [allAgents, tenants] = await Promise.all([
+    prisma.agent.findMany({
+      include: { tenant: true },
+      orderBy: [{ tenant: { name: "asc" } }, { name: "asc" }],
+    }),
+    prisma.tenant.findMany({
+      orderBy: { name: "asc" },
+      select: { slug: true, name: true },
+    }),
+  ]);
+
+  // Filtros em memória — lista toda é pequena o suficiente
+  const agents = allAgents.filter((a) => {
+    if (q) {
+      const hay = `${a.name} ${a.agentId} ${a.model ?? ""} ${a.tenant.name}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    if (sp.tenant && a.tenant.slug !== sp.tenant) return false;
+    if (sp.status) {
+      const eff = effectiveStatus(a);
+      if (eff !== sp.status) return false;
+    }
+    return true;
   });
 
   return (
@@ -25,6 +53,27 @@ export default async function AdminAgentsPage() {
             </Button>
           </Link>
         }
+      />
+
+      <TableFilters
+        placeholder="Buscar por nome, agentId, cliente, modelo..."
+        filters={[
+          {
+            key: "tenant",
+            label: "Cliente",
+            options: tenants.map((t) => ({ value: t.slug, label: t.name })),
+          },
+          {
+            key: "status",
+            label: "Status",
+            options: [
+              { value: "online", label: "online" },
+              { value: "stale", label: "sem heartbeat" },
+              { value: "degraded", label: "degradado" },
+              { value: "offline", label: "offline" },
+            ],
+          },
+        ]}
       />
 
       <div className="overflow-x-auto rounded-lg border bg-card">
@@ -70,7 +119,14 @@ export default async function AdminAgentsPage() {
                 </td>
               </tr>
             ))}
-            {agents.length === 0 && (
+            {agents.length === 0 && allAgents.length > 0 && (
+              <tr>
+                <td colSpan={5} className="px-5 py-10 text-center text-sm text-muted-foreground">
+                  Nenhum agente bate com esses filtros.
+                </td>
+              </tr>
+            )}
+            {allAgents.length === 0 && (
               <EmptyState
                 colSpan={5}
                 icon={<Bot className="h-5 w-5" />}

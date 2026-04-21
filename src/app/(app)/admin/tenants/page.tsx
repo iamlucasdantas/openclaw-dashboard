@@ -4,14 +4,27 @@ import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { Button, PageHeader } from "@/components/form";
 import { EmptyState } from "@/components/empty-state";
+import { TableFilters } from "@/components/table-filters";
 
-export default async function TenantsPage() {
-  const tenants = await prisma.tenant.findMany({
+export default async function TenantsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const sp = await searchParams;
+  const q = (sp.q ?? "").trim().toLowerCase();
+
+  const all = await prisma.tenant.findMany({
     orderBy: { name: "asc" },
     include: {
       _count: { select: { agents: true, memberships: true } },
     },
   });
+  const tenants = q
+    ? all.filter((t) =>
+        `${t.name} ${t.slug} ${t.description ?? ""}`.toLowerCase().includes(q)
+      )
+    : all;
 
   return (
     <div className="space-y-6">
@@ -27,6 +40,8 @@ export default async function TenantsPage() {
           </Link>
         }
       />
+
+      <TableFilters placeholder="Buscar por nome, slug ou descrição..." />
 
       <div className="overflow-x-auto rounded-lg border bg-card">
         <table className="w-full text-sm">
@@ -71,7 +86,14 @@ export default async function TenantsPage() {
                 </td>
               </tr>
             ))}
-            {tenants.length === 0 && (
+            {tenants.length === 0 && all.length > 0 && (
+              <tr>
+                <td colSpan={5} className="px-5 py-10 text-center text-sm text-muted-foreground">
+                  Nenhum cliente bate com essa busca.
+                </td>
+              </tr>
+            )}
+            {all.length === 0 && (
               <EmptyState
                 colSpan={5}
                 icon={<Building2 className="h-5 w-5" />}

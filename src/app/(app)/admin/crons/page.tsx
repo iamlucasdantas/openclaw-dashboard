@@ -3,6 +3,7 @@ import { Clock } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/form";
 import { EmptyState } from "@/components/empty-state";
+import { TableFilters } from "@/components/table-filters";
 import { formatDate } from "@/lib/utils";
 import { humanizeSchedule } from "@/lib/schedule";
 import { CronsAgenda } from "@/components/crons-agenda";
@@ -11,13 +12,24 @@ import { CronViewToggle } from "@/components/cron-view-toggle";
 import { DedupeCronsBanner } from "@/components/dedupe-crons-button";
 import { getCronView } from "@/app/actions/view-mode";
 
-export default async function AdminCronsPage() {
-  const [rawCrons, view] = await Promise.all([
+export default async function AdminCronsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; agent?: string; state?: string }>;
+}) {
+  const sp = await searchParams;
+  const q = (sp.q ?? "").trim().toLowerCase();
+
+  const [rawCrons, view, allAgents] = await Promise.all([
     prisma.agentCron.findMany({
       include: { agent: { include: { tenant: true } } },
       orderBy: [{ createdAt: "desc" }],
     }),
     getCronView(),
+    prisma.agent.findMany({
+      orderBy: { name: "asc" },
+      select: { agentId: true, name: true },
+    }),
   ]);
 
   // Dedupe defensivo: se houver duplicatas de (agentId+name+schedule) no banco,
@@ -40,10 +52,22 @@ export default async function AdminCronsPage() {
     return t !== 0 ? t : a.name.localeCompare(b.name);
   });
 
+  // Aplica filtros
+  const filtered = crons.filter((c) => {
+    if (q) {
+      const hay =
+        `${c.name} ${c.command} ${c.agent.name} ${c.agent.tenant.name}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    if (sp.agent && c.agent.agentId !== sp.agent) return false;
+    if (sp.state && c.state !== sp.state) return false;
+    return true;
+  });
+
   const counts = {
-    active: crons.filter((c) => c.state === "active").length,
-    paused: crons.filter((c) => c.state === "paused").length,
-    disabled: crons.filter((c) => c.state === "disabled").length,
+    active: filtered.filter((c) => c.state === "active").length,
+    paused: filtered.filter((c) => c.state === "paused").length,
+    disabled: filtered.filter((c) => c.state === "disabled").length,
   };
 
   return (
@@ -58,7 +82,30 @@ export default async function AdminCronsPage() {
 
       <DedupeCronsBanner duplicates={duplicates} />
 
-      {crons.length === 0 ? (
+      <TableFilters
+        placeholder="Buscar por tarefa, comando ou assistente..."
+        filters={[
+          {
+            key: "agent",
+            label: "Assistente",
+            options: allAgents.map((a) => ({
+              value: a.agentId,
+              label: a.name,
+            })),
+          },
+          {
+            key: "state",
+            label: "Estado",
+            options: [
+              { value: "active", label: "Ativa" },
+              { value: "paused", label: "Pausada" },
+              { value: "disabled", label: "Desabilitada" },
+            ],
+          },
+        ]}
+      />
+
+      {filtered.length === 0 ? (
         <div className="rounded-lg border bg-card">
           <table className="w-full">
             <tbody>
@@ -75,7 +122,7 @@ export default async function AdminCronsPage() {
       ) : view === "calendar" ? (
         <CronsCalendar
           scopeLinks={{ agentHrefPrefix: "/admin/agents" }}
-          crons={crons.map((c) => ({
+          crons={filtered.map((c) => ({
             id: c.id,
             name: c.name,
             schedule: c.schedule,
@@ -86,7 +133,7 @@ export default async function AdminCronsPage() {
       ) : view === "agenda" ? (
         <CronsAgenda
           scopeLinks={{ agentHrefPrefix: "/admin/agents" }}
-          crons={crons.map((c) => ({
+          crons={filtered.map((c) => ({
             id: c.id,
             name: c.name,
             schedule: c.schedule,
@@ -113,7 +160,7 @@ export default async function AdminCronsPage() {
               </tr>
             </thead>
             <tbody>
-              {crons.map((c) => (
+              {filtered.map((c) => (
                 <tr key={c.id} className="border-t">
                   <td className="px-5 py-3">
                     <Link
