@@ -4,6 +4,7 @@ import { availableRoles, getActiveRole } from "@/lib/active-role";
 import { getTheme } from "@/lib/theme";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
+import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 
 export default async function AppLayout({
   children,
@@ -31,6 +32,7 @@ export default async function AppLayout({
         />
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </div>
+      <KeyboardShortcuts activeRole={activeRole} />
     </div>
   );
 }

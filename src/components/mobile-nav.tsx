@@ -32,14 +32,14 @@ export function MobileNav({ activeRole }: { activeRole: ActiveRole }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-md border text-muted-foreground hover:bg-accent hover:text-accent-foreground md:hidden"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-md border text-muted-foreground hover:bg-accent hover:text-accent-foreground lg:hidden"
         aria-label="Abrir menu"
       >
         <Menu className="h-5 w-5" />
       </button>
 
       {open ? (
-        <div className="fixed inset-0 z-50 md:hidden" role="dialog">
+        <div className="fixed inset-0 z-50 lg:hidden" role="dialog">
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setOpen(false)}

@@ -3,7 +3,7 @@ import { NavLinks } from "./nav-links";
 
 export function Sidebar({ activeRole }: { activeRole: ActiveRole }) {
   return (
-    <aside className="hidden w-60 shrink-0 border-r bg-card md:flex md:flex-col">
+    <aside className="hidden w-60 shrink-0 border-r bg-card lg:flex lg:flex-col">
       <div className="flex h-14 items-center gap-2 border-b px-4">
         <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
           <span className="text-xs font-bold">OC</span>
