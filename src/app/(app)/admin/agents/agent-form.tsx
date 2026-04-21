@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import {
   createAgent,
@@ -15,6 +16,64 @@ import {
   Select,
   Textarea,
 } from "@/components/form";
+
+// Modelos conhecidos — quando "outro" é selecionado, o usuário digita
+// o nome livre (uso futuro com modelos customizados / providers raros).
+const KNOWN_MODELS = [
+  { value: "claude-opus-4-7", label: "Claude Opus 4.7 (mais poderoso)" },
+  { value: "claude-sonnet-4-6", label: "Claude Sonnet 4.6 (equilibrado)" },
+  {
+    value: "claude-haiku-4-5-20251001",
+    label: "Claude Haiku 4.5 (rápido e barato)",
+  },
+];
+
+function ModelField({
+  initial,
+  error,
+}: {
+  initial: string;
+  error?: string;
+}) {
+  const knownValues = KNOWN_MODELS.map((m) => m.value);
+  const isKnown = initial === "" || knownValues.includes(initial);
+  const [selected, setSelected] = useState(
+    isKnown ? initial || "claude-sonnet-4-6" : "other"
+  );
+  const [custom, setCustom] = useState(isKnown ? "" : initial);
+
+  const effective = selected === "other" ? custom : selected;
+
+  return (
+    <Field
+      label="Modelo (cérebro do assistente)"
+      hint="Controla qualidade × custo. Muda apenas se souber o que está fazendo."
+      error={error}
+    >
+      <input type="hidden" name="model" value={effective} />
+      <div className="space-y-2">
+        <Select
+          value={selected}
+          onChange={(e) => setSelected(e.target.value)}
+        >
+          {KNOWN_MODELS.map((m) => (
+            <option key={m.value} value={m.value}>
+              {m.label}
+            </option>
+          ))}
+          <option value="other">Outro (digitar nome exato)</option>
+        </Select>
+        {selected === "other" ? (
+          <Input
+            value={custom}
+            onChange={(e) => setCustom(e.target.value)}
+            placeholder="provider/model-id"
+          />
+        ) : null}
+      </div>
+    </Field>
+  );
+}
 
 function Submit({ label }: { label: string }) {
   const { pending } = useFormStatus();
@@ -173,25 +232,37 @@ export function AgentForm({
         </div>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Modelo LLM" error={state.fieldErrors?.model}>
-          <Input
-            name="model"
-            defaultValue={
-              initial?.model ?? templateDefaults?.model ?? ""
-            }
-            placeholder="claude-opus-4-7"
-          />
-        </Field>
+      <ModelField
+        initial={initial?.model ?? templateDefaults?.model ?? ""}
+        error={state.fieldErrors?.model}
+      />
 
-        <Field label="Status" error={state.fieldErrors?.status}>
-          <Select name="status" defaultValue={initial?.status ?? "offline"}>
-            <option value="online">online</option>
-            <option value="offline">offline</option>
-            <option value="degraded">degraded</option>
-          </Select>
+      {/* Status é reflexo do heartbeat e do flag manual "degraded".
+       *  Não exibimos como campo editável em /edit — não faz sentido
+       *  mudar manualmente pra "online" sem receber heartbeat.
+       *  Em /create, deixamos apenas a opção "degraded" como flag. */}
+      {mode === "create" ? (
+        <Field
+          label="Marcar como degradado?"
+          hint="Use apenas se o assistente está em manutenção; heartbeat não sobrescreve."
+        >
+          <label className="inline-flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="status"
+              value="degraded"
+              defaultChecked={initial?.status === "degraded"}
+            />
+            Sim, manter marcado como degradado
+          </label>
         </Field>
-      </div>
+      ) : (
+        <input
+          type="hidden"
+          name="status"
+          value={initial?.status ?? "offline"}
+        />
+      )}
 
       <FormError message={state.error} />
 

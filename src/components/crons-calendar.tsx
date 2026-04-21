@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Clock, X } from "lucide-react";
 import { colorForId } from "@/lib/palette";
 import {
@@ -70,10 +71,18 @@ type RunItem = { cron: CalendarCron; time: Date };
 export function CronsCalendar({
   crons,
   scopeLinks,
+  /** "detail" (default) → legenda navega pro detalhe do agente.
+   *  "filter" → legenda toggle `?agent=X` na URL atual. */
+  legendMode = "detail",
 }: {
   crons: CalendarCron[];
   scopeLinks: ScopedLinks;
+  legendMode?: "detail" | "filter";
 }) {
+  const pathname = usePathname();
+  const params = useSearchParams();
+  const activeAgentFilter = params.get("agent") ?? null;
+
   const today = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -132,11 +141,29 @@ export function CronsCalendar({
         <div className="flex flex-wrap items-center gap-2 text-[11px]">
           {Array.from(agentMap.values()).map((a) => {
             const c = colorForId(a.agentId);
+            const isActive = activeAgentFilter === a.agentId;
+            // Legenda em modo filtro: clique toggle ?agent=X na URL atual.
+            // Modo detail (default): legenda continua navegando pro agente.
+            let href = `${scopeLinks.agentHrefPrefix}/${a.agentId}`;
+            if (legendMode === "filter") {
+              const sp = new URLSearchParams(Array.from(params.entries()));
+              if (isActive) sp.delete("agent");
+              else sp.set("agent", a.agentId);
+              href = `${pathname}?${sp.toString()}`;
+            }
             return (
               <Link
                 key={a.agentId}
-                href={`${scopeLinks.agentHrefPrefix}/${a.agentId}`}
-                className="inline-flex items-center gap-1.5 rounded-full border bg-card px-2 py-0.5 hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                href={href}
+                aria-pressed={
+                  legendMode === "filter" ? isActive : undefined
+                }
+                className={
+                  "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-ring " +
+                  (legendMode === "filter" && isActive
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "bg-card hover:bg-accent")
+                }
               >
                 <span
                   className="h-2 w-2 rounded-full"
@@ -144,9 +171,17 @@ export function CronsCalendar({
                   aria-hidden
                 />
                 {a.name}
+                {legendMode === "filter" && isActive ? (
+                  <X className="h-3 w-3" aria-hidden />
+                ) : null}
               </Link>
             );
           })}
+          {legendMode === "filter" && activeAgentFilter ? (
+            <span className="text-[10px] text-muted-foreground">
+              (clique no chip ativo para limpar)
+            </span>
+          ) : null}
         </div>
       ) : null}
 

@@ -10,6 +10,7 @@ import { CronsAgenda } from "@/components/crons-agenda";
 import { CronsCalendar } from "@/components/crons-calendar";
 import { CronViewToggle } from "@/components/cron-view-toggle";
 import { DedupeCronsBanner } from "@/components/dedupe-crons-button";
+import { NewCronLink } from "@/components/new-cron-link";
 import { getCronView } from "@/app/actions/view-mode";
 
 export default async function AdminCronsPage({
@@ -76,7 +77,10 @@ export default async function AdminCronsPage({
         title="Tarefas agendadas"
         description={`${counts.active} ativa(s) · ${counts.paused} pausada(s) · ${counts.disabled} desabilitada(s).`}
         actions={
-          <CronViewToggle current={view} pathname="/admin/crons" />
+          <div className="flex flex-wrap items-center gap-2">
+            <NewCronLink agents={allAgents} scope="admin" />
+            <CronViewToggle current={view} pathname="/admin/crons" />
+          </div>
         }
       />
 
@@ -122,6 +126,7 @@ export default async function AdminCronsPage({
       ) : view === "calendar" ? (
         <CronsCalendar
           scopeLinks={{ agentHrefPrefix: "/admin/agents" }}
+          legendMode="filter"
           crons={filtered.map((c) => ({
             id: c.id,
             name: c.name,

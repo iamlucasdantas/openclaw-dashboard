@@ -1,32 +1,51 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Pencil } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { formatDate } from "@/lib/utils";
 import { effectiveStatus } from "@/lib/agent-status";
-import { Button } from "@/components/form";
-import { StatusPill } from "@/components/status-pill";
-import { Breadcrumbs } from "@/components/breadcrumbs";
-import { HeartbeatIntegration } from "@/components/heartbeat-integration";
-import { GithubSection } from "@/components/github-integration";
-import { SkillsManager } from "@/components/skills-manager";
-import { CronsManager } from "@/components/crons-manager";
-import { BudgetBar } from "@/components/budget-bar";
-import { AgentBudgetForm } from "@/components/budget-form";
 import { costForAgentThisMonth } from "@/lib/costs-queries";
+import {
+  activityCounts,
+  activityTimeline,
+  upcomingTasksForAgent,
+} from "@/lib/agent-queries";
+import { AgentHeader } from "@/components/agent-tabs/AgentHeader";
+import type { TabKey } from "@/components/agent-tabs/AgentHeader";
+import { TabSummary } from "@/components/agent-tabs/TabSummary";
+import { TabActivity } from "@/components/agent-tabs/TabActivity";
+import { TabConnections } from "@/components/agent-tabs/TabConnections";
+import { TabDeveloper } from "@/components/agent-tabs/TabDeveloper";
 
-export default async function AgentDetailPage({
+type Range = "today" | "7d" | "30d";
+
+export default async function AdminAgentDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ agentId: string }>;
+  searchParams: Promise<{ tab?: string; range?: string }>;
 }) {
   const { agentId } = await params;
+  const sp = await searchParams;
+  const tab: TabKey =
+    sp.tab === "activity" ||
+    sp.tab === "connections" ||
+    sp.tab === "dev"
+      ? (sp.tab as TabKey)
+      : "summary";
+  const range: Range =
+    sp.range === "7d" || sp.range === "30d" ? sp.range : "today";
+
   const [agent, skillCatalog] = await Promise.all([
     prisma.agent.findUnique({
       where: { agentId },
       include: {
         tenant: true,
-        github: { include: { repos: { orderBy: [{ owner: "asc" }, { name: "asc" }] } } },
+        github: {
+          include: {
+            repos: { orderBy: [{ owner: "asc" }, { name: "asc" }] },
+          },
+        },
         skills: {
           include: {
             skill: true,
@@ -40,120 +59,76 @@ export default async function AgentDetailPage({
     }),
     prisma.skill.findMany({
       orderBy: [{ category: "asc" }, { name: "asc" }],
-      select: { id: true, slug: true, name: true, category: true, description: true },
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        category: true,
+        description: true,
+      },
     }),
   ]);
+
   if (!agent) notFound();
 
-  const usedThisMonth = await costForAgentThisMonth(agent.id);
-  const eff = effectiveStatus(agent);
+  const status = effectiveStatus(agent);
+  const basePath = `/admin/agents/${agent.agentId}`;
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <Breadcrumbs
-          items={[
-            { label: "Agentes", href: "/admin/agents" },
-            { label: agent.name },
-          ]}
-        />
-        <div className="mt-2 flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {agent.name}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                {agent.agentId}
-              </code>{" "}
-              ·{" "}
-              <Link
-                href={`/admin/tenants/${agent.tenant.slug}`}
-                className="hover:underline"
-              >
-                {agent.tenant.name}
-              </Link>
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Link href={`/admin/agents/${agent.agentId}/edit`}>
-              <Button variant="secondary">
-                <Pencil className="h-4 w-4" />
-                Editar
-              </Button>
-            </Link>
-            {/* Excluir foi movido para /edit → Zona de perigo.
-                Ação destrutiva não fica no topo (padrão GitHub/Stripe). */}
-          </div>
-        </div>
-      </div>
+  let tabContent: React.ReactNode;
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border bg-card p-4">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">
-            Status
-          </div>
-          <div className="mt-2">
-            <StatusPill status={eff} />
-          </div>
-        </div>
-        <Card label="Modelo" value={agent.model ?? "—"} />
-        <Card label="Criado em" value={formatDate(agent.createdAt)} />
-        <Card label="Último heartbeat" value={formatDate(agent.lastHeartbeatAt)} />
-      </div>
-
-      {agent.persona ? (
-        <section className="rounded-lg border bg-card">
-          <div className="border-b px-5 py-3">
-            <h2 className="text-sm font-semibold">Persona</h2>
-          </div>
-          <div className="px-5 py-4 text-sm">{agent.persona}</div>
-        </section>
-      ) : null}
-
-      <section className="rounded-lg border bg-card">
-        <div className="border-b px-5 py-3">
-          <h2 className="text-sm font-semibold">Limite mensal de custo</h2>
-        </div>
-        <div className="space-y-4 p-5">
-          <BudgetBar used={usedThisMonth} budget={agent.monthlyBudgetUsd} />
-          <AgentBudgetForm
-            agentDbId={agent.id}
-            scope="admin"
-            current={agent.monthlyBudgetUsd}
-          />
-        </div>
-      </section>
-
-      <HeartbeatIntegration agent={agent} scope="admin" />
-
-      <GithubSection
-        agentDbId={agent.id}
-        scope="admin"
-        integration={
-          agent.github
-            ? {
-                id: agent.github.id,
-                mode: agent.github.mode,
-                scope: agent.github.scope,
-                org: agent.github.org,
-                defaultBranch: agent.github.defaultBranch,
-                tokenPreview: agent.github.tokenPreview,
-                repos: agent.github.repos.map((r) => ({
-                  id: r.id,
-                  owner: r.owner,
-                  name: r.name,
-                  role: r.role,
-                })),
-              }
-            : null
-        }
+  if (tab === "summary") {
+    const [counts, usedUsd, upcoming] = await Promise.all([
+      activityCounts(agent.id),
+      costForAgentThisMonth(agent.id),
+      upcomingTasksForAgent(agent.id, 5),
+    ]);
+    tabContent = (
+      <TabSummary
+        counts={counts}
+        usedThisMonthUsd={usedUsd}
+        budgetUsd={agent.monthlyBudgetUsd}
+        upcoming={upcoming}
+        editHref={`${basePath}/edit`}
+        scheduleHref="/admin/crons"
+        // Admin: Excluir vive em /edit → Zona de perigo, não aqui.
+        onDeleteAction={null}
+        agentName={agent.name}
+        crons={agent.crons.map((c) => ({
+          id: c.id,
+          name: c.name,
+          schedule: c.schedule,
+          state: c.state,
+          agent: { agentId: agent.agentId, name: agent.name },
+        }))}
+        agentHrefPrefix="/admin/agents"
       />
-
-      <SkillsManager
+    );
+  } else if (tab === "activity") {
+    const raw = await activityTimeline(agent.id, range);
+    const activities = raw.map((a) => ({
+      id: a.id,
+      summary: a.summary,
+      body: a.body,
+      contentType: a.contentType,
+      contentUrl: a.contentUrl,
+      status: a.status,
+      occurredAt: a.occurredAt,
+      agent: { agentId: agent.agentId, name: agent.name },
+    }));
+    tabContent = (
+      <TabActivity
+        range={range}
+        basePath={`${basePath}?tab=activity`}
+        activities={activities}
+        agentHrefPrefix="/admin/agents"
+      />
+    );
+  } else if (tab === "connections") {
+    tabContent = (
+      <TabConnections
         agentDbId={agent.id}
         scope="admin"
-        installed={agent.skills.map((s) => ({
+        skillsInstalled={agent.skills.map((s) => ({
           id: s.id,
           enabled: s.enabled,
           skill: {
@@ -173,26 +148,74 @@ export default async function AgentDetailPage({
             : null,
           activityCount: s._count.activities,
         }))}
-        catalog={skillCatalog}
-      />
-
-      <CronsManager
-        agentDbId={agent.id}
-        scope="admin"
+        skillCatalog={skillCatalog}
         crons={agent.crons}
-        wizardHref={`/admin/agents/${agent.agentId}/schedule/new`}
+        github={
+          agent.github
+            ? {
+                org: agent.github.org,
+                repos: agent.github.repos.map((r) => ({
+                  owner: r.owner,
+                  name: r.name,
+                  role: r.role,
+                })),
+              }
+            : null
+        }
+        githubAdvancedHref={`${basePath}?tab=dev`}
+        scheduleWizardHref={`${basePath}/schedule/new`}
       />
-    </div>
-  );
-}
+    );
+  } else {
+    tabContent = (
+      <TabDeveloper
+        agent={agent}
+        scope="admin"
+        githubIntegration={
+          agent.github
+            ? {
+                id: agent.github.id,
+                mode: agent.github.mode,
+                scope: agent.github.scope,
+                org: agent.github.org,
+                defaultBranch: agent.github.defaultBranch,
+                tokenPreview: agent.github.tokenPreview,
+                repos: agent.github.repos.map((r) => ({
+                  id: r.id,
+                  owner: r.owner,
+                  name: r.name,
+                  role: r.role,
+                })),
+              }
+            : null
+        }
+      />
+    );
+  }
 
-function Card({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border bg-card p-4">
-      <div className="text-xs uppercase tracking-wider text-muted-foreground">
-        {label}
-      </div>
-      <div className="mt-1 text-sm font-medium">{value}</div>
+    <div className="space-y-6">
+      <Link
+        href="/admin/agents"
+        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <ArrowLeft className="h-3 w-3" aria-hidden />
+        Voltar para agentes
+      </Link>
+
+      <AgentHeader
+        agent={{
+          name: agent.name,
+          persona: agent.persona,
+          tenantName: agent.tenant.name,
+        }}
+        status={status}
+        currentTab={tab}
+        basePath={basePath}
+        scope="admin"
+      />
+
+      {tabContent}
     </div>
   );
 }

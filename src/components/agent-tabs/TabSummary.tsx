@@ -17,7 +17,9 @@ type Props = {
   agentHrefPrefix: "/admin/agents" | "/client/agents";
   editHref: string;
   scheduleHref: string;
-  onDeleteAction: () => Promise<void>;
+  /** Opcional. Null = não renderiza seção "Ações" (caso admin, onde
+   *  excluir foi movido pra Zona de perigo em /edit). */
+  onDeleteAction?: (() => Promise<void>) | null;
   agentName: string;
   deleteImpact?: string[];
 };
@@ -126,16 +128,18 @@ export function TabSummary({
               {copy.agent.actions.edit}
             </Button>
           </Link>
-          <TypeToConfirmButton
-            action={onDeleteAction}
-            confirmText={agentName}
-            triggerLabel={copy.agent.actions.delete}
-            title={`Desligar o assistente "${agentName}"?`}
-            description="Esta ação não pode ser desfeita."
-            impactLines={deleteImpact}
-            ctaLabel={`Desligar ${agentName}`}
-            cancelLabel="Manter ativo"
-          />
+          {onDeleteAction ? (
+            <TypeToConfirmButton
+              action={onDeleteAction}
+              confirmText={agentName}
+              triggerLabel={copy.agent.actions.delete}
+              title={`Desligar o assistente "${agentName}"?`}
+              description="Esta ação não pode ser desfeita."
+              impactLines={deleteImpact}
+              ctaLabel={`Desligar ${agentName}`}
+              cancelLabel="Manter ativo"
+            />
+          ) : null}
         </div>
       </section>
     </div>

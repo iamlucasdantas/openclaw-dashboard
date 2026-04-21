@@ -50,6 +50,7 @@ export default async function ClientCronsPage() {
       ) : view === "calendar" ? (
         <CronsCalendar
           scopeLinks={{ agentHrefPrefix: "/client/agents" }}
+          legendMode="filter"
           crons={crons.map((c) => ({
             id: c.id,
             name: c.name,
