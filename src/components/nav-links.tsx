@@ -13,6 +13,7 @@ import {
   Mail,
   Plug,
   Sparkles,
+  Target,
   Users,
   UserCog,
 } from "lucide-react";
@@ -34,6 +35,7 @@ export function NavLinks({
     { href: "/admin/tenants", label: copy.nav.admin.tenants, icon: Building2 },
     { href: "/admin/agents", label: copy.nav.admin.agents, icon: Bot },
     { href: "/admin/integrations", label: copy.nav.admin.integrations, icon: Plug },
+    { href: "/admin/prospecting", label: copy.nav.admin.prospecting, icon: Target },
     { href: "/admin/github", label: copy.nav.admin.github, icon: Github },
     { href: "/admin/skills", label: copy.nav.admin.skills, icon: Sparkles },
     { href: "/admin/crons", label: copy.nav.admin.crons, icon: CalendarDays },
@@ -50,6 +52,11 @@ export function NavLinks({
       href: "/client/integrations",
       label: copy.nav.client.integrations,
       icon: Plug,
+    },
+    {
+      href: "/client/prospecting",
+      label: copy.nav.client.prospecting,
+      icon: Target,
     },
     { href: "/client/crons", label: copy.nav.client.schedule, icon: CalendarDays },
     { href: "/client/costs", label: copy.nav.client.costs, icon: DollarSign },

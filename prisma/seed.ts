@@ -593,6 +593,111 @@ async function main() {
     });
   }
 
+  // Exemplo de campanha de prospecção no tenant Dantas Labs
+  const existingCampaigns = await prisma.prospectingCampaign.count();
+  if (existingCampaigns === 0 && lucasTenant) {
+    const campaign = await prisma.prospectingCampaign.create({
+      data: {
+        tenantId: lucasTenant.id,
+        name: "Salões em Curitiba",
+        state: "active",
+        ghlLocationId: "demoLoc_dantas_labs",
+        ghlApiKey: "pit-demo-xxxxxxxx",
+        ghlApiKeyHint: "xxxx",
+        areaLabel: "Curitiba - PR",
+        radiusKm: 10,
+        niches: JSON.stringify([
+          "Salões de beleza",
+          "Barbearias",
+          "Clínicas de estética",
+        ]),
+        filters: JSON.stringify({
+          gbp: true,
+          website: true,
+          social: false,
+          email: true,
+          phone: true,
+        }),
+        fieldMap: JSON.stringify({
+          businessName: "companyName",
+          contactName: "firstName",
+          contactEmail: "email",
+          contactPhone: "phone",
+          address: "address1",
+          city: "city",
+          state: "state",
+          websiteUrl: "website",
+          gbpUrl: "gbp_url",
+          instagramUrl: "instagram",
+          niche: "niche",
+        }),
+        schedule: "daily",
+        scheduleTime: "09:00",
+        nextRunAt: (() => {
+          const d = new Date();
+          d.setHours(9, 0, 0, 0);
+          if (d <= new Date()) d.setDate(d.getDate() + 1);
+          return d;
+        })(),
+        autoExpand: true,
+        expandAfterDays: 3,
+        expandStepKm: 5,
+        maxRadiusKm: 50,
+      },
+    });
+
+    // Gera leads fake pra já vir com conteúdo
+    const niches = ["Salões de beleza", "Barbearias", "Clínicas de estética"];
+    const samples = [
+      "Studio Beleza & Cia",
+      "Salão Rosa",
+      "Barbearia do João",
+      "Casa de Cílios",
+      "Espaço Tranquilidade",
+      "Beleza Natural",
+      "Estilo Corte",
+      "Charme Salão",
+      "Bela Vida",
+      "Toque Final",
+    ];
+    for (let i = 0; i < samples.length; i++) {
+      const niche = niches[i % niches.length];
+      const rollStatus = Math.random();
+      const status = rollStatus < 0.6 ? "synced" : rollStatus < 0.85 ? "pending" : "error";
+      const slug = samples[i].toLowerCase().replace(/\s+/g, "-").replace(/&/g, "e");
+      await prisma.prospectingLead.create({
+        data: {
+          campaignId: campaign.id,
+          businessName: samples[i],
+          niche,
+          address: `Rua dos Pinhais, ${100 + i * 20}`,
+          city: "Curitiba",
+          state: "PR",
+          websiteUrl: Math.random() > 0.2 ? `https://${slug}.com.br` : null,
+          gbpUrl: `https://g.page/${slug}`,
+          instagramUrl:
+            Math.random() > 0.3 ? `https://instagram.com/${slug}` : null,
+          contactName: ["Ana Silva", "Carlos Lima", "Marina Costa", "João Santos"][
+            i % 4
+          ],
+          contactEmail: `contato@${slug}.com.br`,
+          contactPhone: `(41) 9${Math.floor(8000 + Math.random() * 1999)}-${Math.floor(
+            1000 + Math.random() * 8999
+          )}`,
+          syncStatus: status,
+          ghlContactId:
+            status === "synced"
+              ? "mock_" + Math.random().toString(36).slice(2, 10)
+              : null,
+          syncedAt: status === "synced" ? new Date() : null,
+          syncError:
+            status === "error" ? "Falha ao criar contato na HighLevel (mock)" : null,
+        },
+      });
+    }
+    console.log(`   • ProspectingCampaign criada com ${samples.length} leads fake`);
+  }
+
   console.log("✅  Seed concluído:");
   console.log(`   • Tenants:     ${await prisma.tenant.count()}`);
   console.log(`   • Users:       ${await prisma.user.count()}`);
@@ -601,6 +706,8 @@ async function main() {
   console.log(`   • AgentSkills: ${await prisma.agentSkill.count()}`);
   console.log(`   • Crons:       ${await prisma.agentCron.count()}`);
   console.log(`   • Events:      ${await prisma.usageEvent.count()}`);
+  console.log(`   • Campaigns:   ${await prisma.prospectingCampaign.count()}`);
+  console.log(`   • Leads:       ${await prisma.prospectingLead.count()}`);
   console.log("");
   console.log("   Login: lucas.odantas@gmail.com  /  senha: changeme");
 }
