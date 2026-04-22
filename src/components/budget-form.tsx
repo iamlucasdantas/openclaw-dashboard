@@ -74,7 +74,7 @@ function BudgetFormInner({
         <p className="text-xs text-destructive">{state.error}</p>
       ) : null}
       {state.success ? (
-        <p className="text-xs text-emerald-700 dark:text-emerald-400">
+        <p className="text-xs text-emerald-300">
           {state.success}
         </p>
       ) : null}

@@ -45,7 +45,7 @@ export function TabSummary({
         <StatCard value={counts.month} label={copy.agent.detail.stats.month} />
       </div>
 
-      <section className="rounded-lg border bg-card p-5">
+      <section className="rounded-xl border border-border bg-card p-5">
         <h2 className="text-sm font-semibold">
           {copy.costs.header.title} do mês
         </h2>
@@ -70,8 +70,8 @@ export function TabSummary({
         </div>
       </section>
 
-      <section className="rounded-lg border bg-card">
-        <div className="border-b px-5 py-3">
+      <section className="rounded-xl border border-border bg-card">
+        <div className="border-b border-border px-5 py-3">
           <h2 className="text-sm font-semibold">
             {copy.agent.detail.upcomingTitle}
           </h2>
@@ -148,8 +148,8 @@ export function TabSummary({
 
 function StatCard({ value, label }: { value: number; label: string }) {
   return (
-    <div className="rounded-lg border bg-card p-4">
-      <div className="text-3xl font-semibold tabular-nums">{value}</div>
+    <div className="rounded-xl border border-border bg-card p-4">
+      <div className="text-3xl font-semibold tabular-nums text-foreground">{value}</div>
       <div className="mt-1 text-xs uppercase tracking-wider text-muted-foreground">
         {label}
       </div>

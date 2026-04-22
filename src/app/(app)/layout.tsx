@@ -21,7 +21,7 @@ export default async function AppLayout({
   const theme = await getTheme();
 
   return (
-    <div className="flex min-h-screen bg-muted/30">
+    <div className="flex min-h-screen bg-background">
       <Sidebar activeRole={activeRole} />
       <div className="flex flex-1 flex-col">
         <Header

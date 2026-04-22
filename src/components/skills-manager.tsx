@@ -64,8 +64,8 @@ export function SkillsManager({
   const skillDetailHref = scope === "client" ? "/client/skills" : "/admin/skills";
 
   return (
-    <section className="rounded-lg border bg-card">
-      <div className="border-b px-5 py-3">
+    <section className="rounded-xl border border-border bg-card">
+      <div className="border-b border-border px-5 py-3">
         <h2 className="flex items-center gap-2 text-sm font-semibold">
           <Plug className="h-4 w-4" /> Habilidades
         </h2>
@@ -159,8 +159,8 @@ function InstalledRow({
               className={
                 "rounded-full px-2 py-0.5 text-[10px] font-medium " +
                 (row.enabled
-                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
-                  : "bg-muted text-muted-foreground")
+                  ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20"
+                  : "bg-muted/60 text-muted-foreground border border-border")
               }
             >
               {row.enabled ? "ativa" : "desligada"}

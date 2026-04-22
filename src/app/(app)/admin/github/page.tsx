@@ -35,9 +35,9 @@ export default async function AdminGithubPage() {
         description={`${integrations.length} agente(s) com GitHub configurado · ${totalRepos} repositório(s) vinculado(s).`}
       />
 
-      <div className="overflow-x-auto rounded-lg border bg-card">
+      <div className="overflow-x-auto rounded-xl border border-border bg-card">
         <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
+          <thead className="bg-secondary/50 text-xs uppercase tracking-wider text-muted-foreground">
             <tr>
               <th className="px-5 py-2.5 text-left">Cliente</th>
               <th className="px-5 py-2.5 text-left">Agente</th>

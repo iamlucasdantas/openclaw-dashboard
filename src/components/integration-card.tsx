@@ -26,7 +26,7 @@ export function IntegrationCard({
   return (
     <Link
       href={`${basePath}/${slug}`}
-      className="group relative flex flex-col gap-3 rounded-xl border bg-card p-5 transition hover:border-primary hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="group relative flex flex-col gap-3 rounded-xl border border-border bg-card p-5 transition hover:border-primary/40 hover:shadow-[0_0_20px_rgba(34,211,238,0.08)] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-start gap-3">
@@ -44,7 +44,7 @@ export function IntegrationCard({
           </div>
         </div>
         {agentsCount > 0 ? (
-          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
+          <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium text-emerald-300 border border-emerald-500/20">
             conectada
           </span>
         ) : (
@@ -60,7 +60,7 @@ export function IntegrationCard({
         </p>
       ) : null}
 
-      <div className="mt-auto flex items-center justify-between border-t pt-3 text-[11px] text-muted-foreground">
+      <div className="mt-auto flex items-center justify-between border-t border-border pt-3 text-[11px] text-muted-foreground">
         <span>
           {agentsCount === 0
             ? "Nenhum assistente"

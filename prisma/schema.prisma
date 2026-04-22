@@ -83,6 +83,9 @@ model Agent {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
+  avatarUrl       String?
+  description     String?
+
   monthlyBudgetUsd Float?
 
   tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -90,6 +93,7 @@ model Agent {
   github      GithubIntegration?
   skills      AgentSkill[]
   crons       AgentCron[]
+  tasks       Task[]
 }
 
 // Catálogo de skills disponíveis. Global (não multi-tenant): todo
@@ -139,10 +143,39 @@ model SkillActivity {
   occurredAt    DateTime
   createdAt     DateTime @default(now())
 
+  taskId      String?                     // link para a Task agrupadora
+  task        Task?     @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
   agentSkill AgentSkill @relation(fields: [agentSkillId], references: [id], onDelete: Cascade)
 
   @@index([occurredAt])
   @@index([agentSkillId, occurredAt])
+  @@index([taskId])
+}
+
+// Tarefa de negócio — agrupa interações em uma unidade de trabalho.
+// Ex: "Criar carrossel seguro auto" ou "Agendar post Instagram"
+// Substitui a exibição de mensagens individuais no timeline.
+model Task {
+  id            String   @id @default(cuid())
+  agentId       String
+  title         String                    // título legível: "Carrossel Seguro Auto"
+  status        String   @default("completed") // completed | in_progress | failed
+  category      String?                    // carousel | social_post | article | support | news | crm | other
+  result        String?                    // resumo do resultado final
+  resultType    String?                    // text | image | link | file
+  resultUrl     String?                    // URL do deliverable (imagem, PDF, link)
+  deliverableData String?                  // JSON: {title, content, images[], links[], platforms[], scheduledDate, caption}
+  startedAt     DateTime
+  resolvedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  agent        Agent           @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  activities   SkillActivity[]
+
+  @@index([agentId, startedAt])
+  @@index([status])
 }
 
 // Cron / tarefa agendada por agente.

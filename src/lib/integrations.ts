@@ -5,8 +5,11 @@
 
 import { prisma } from "@/lib/prisma";
 import { startOfDay } from "@/lib/costs";
+import { filterRelevantActivities } from "@/lib/activity-relevance";
 
 export async function listIntegrations(tenantIds?: string[]) {
+  const start = startOfDay();
+
   const skills = await prisma.skill.findMany({
     where: { category: "integration" },
     orderBy: [{ name: "asc" }],
@@ -15,40 +18,44 @@ export async function listIntegrations(tenantIds?: string[]) {
         where: tenantIds ? { agent: { tenantId: { in: tenantIds } } } : undefined,
         include: {
           agent: { include: { tenant: true } },
-          _count: { select: { activities: true } },
+          activities: {
+            select: {
+              summary: true,
+              body: true,
+              contentUrl: true,
+              occurredAt: true,
+            },
+          },
         },
       },
     },
   });
 
-  // Atividades de hoje por skill (uma query separada agregada)
-  const start = startOfDay();
-  const todayAgg = await prisma.skillActivity.groupBy({
-    by: ["agentSkillId"],
-    where: {
-      occurredAt: { gte: start },
-      ...(tenantIds
-        ? { agentSkill: { agent: { tenantId: { in: tenantIds } } } }
-        : {}),
-    },
-    _count: { _all: true },
-  });
-  const todayByAsk = new Map(
-    todayAgg.map((r) => [r.agentSkillId, r._count._all])
-  );
-
   return skills
     .map((s) => {
-      const installs = s.installations;
+      const installs = s.installations.map((i) => {
+        const relevantActivities = filterRelevantActivities(i.activities);
+        const todayRelevantActivities = relevantActivities.filter(
+          (a) => a.occurredAt >= start
+        );
+
+        return {
+          ...i,
+          relevantActivities,
+          todayRelevantActivities,
+        };
+      });
+
       const agentsCount = installs.length;
       const totalActivities = installs.reduce(
-        (acc, i) => acc + i._count.activities,
+        (acc, i) => acc + i.relevantActivities.length,
         0
       );
       const todayActivities = installs.reduce(
-        (acc, i) => acc + (todayByAsk.get(i.id) ?? 0),
+        (acc, i) => acc + i.todayRelevantActivities.length,
         0
       );
+
       return {
         id: s.id,
         slug: s.slug,
@@ -91,5 +98,12 @@ export async function getIntegrationDetail(
     },
   });
   if (!skill || skill.category !== "integration") return null;
-  return skill;
+
+  return {
+    ...skill,
+    installations: skill.installations.map((i) => ({
+      ...i,
+      activities: filterRelevantActivities(i.activities),
+    })),
+  };
 }

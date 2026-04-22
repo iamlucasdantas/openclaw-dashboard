@@ -56,6 +56,7 @@ export default async function ClientCronsPage() {
             name: c.name,
             schedule: c.schedule,
             state: c.state,
+            nextRunAt: c.nextRunAt,
             agent: { agentId: c.agent.agentId, name: c.agent.name },
           }))}
         />
@@ -67,6 +68,7 @@ export default async function ClientCronsPage() {
             name: c.name,
             schedule: c.schedule,
             state: c.state,
+            nextRunAt: c.nextRunAt,
             agent: {
               agentId: c.agent.agentId,
               name: c.agent.name,
@@ -76,9 +78,9 @@ export default async function ClientCronsPage() {
           }))}
         />
       ) : (
-        <div className="overflow-x-auto rounded-lg border bg-card">
+        <div className="overflow-x-auto rounded-xl border border-border bg-card">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
+            <thead className="bg-secondary/50 text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="px-5 py-2.5 text-left">Agente</th>
                 <th className="px-5 py-2.5 text-left">Tarefa</th>

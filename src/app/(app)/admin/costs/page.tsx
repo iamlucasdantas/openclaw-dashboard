@@ -44,8 +44,8 @@ export default async function AdminCostsPage() {
         />
       </div>
 
-      <section className="rounded-lg border bg-card">
-        <div className="border-b px-5 py-3">
+      <section className="rounded-xl border border-border bg-card">
+        <div className="border-b border-border px-5 py-3">
           <h2 className="text-sm font-semibold">Custo por dia (mês atual)</h2>
         </div>
         <div className="p-5">
@@ -54,12 +54,12 @@ export default async function AdminCostsPage() {
       </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="rounded-lg border bg-card">
-          <div className="border-b px-5 py-3">
+        <section className="rounded-xl border border-border bg-card">
+          <div className="border-b border-border px-5 py-3">
             <h2 className="text-sm font-semibold">Top clientes (mês)</h2>
           </div>
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
+            <thead className="bg-secondary/50 text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="px-5 py-2 text-left">Cliente</th>
                 <th className="px-5 py-2 text-right">Tokens</th>
@@ -104,12 +104,12 @@ export default async function AdminCostsPage() {
           </table>
         </section>
 
-        <section className="rounded-lg border bg-card">
-          <div className="border-b px-5 py-3">
+        <section className="rounded-xl border border-border bg-card">
+          <div className="border-b border-border px-5 py-3">
             <h2 className="text-sm font-semibold">Top agentes (mês)</h2>
           </div>
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
+            <thead className="bg-secondary/50 text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="px-5 py-2 text-left">Agente</th>
                 <th className="px-5 py-2 text-right">Tokens</th>
@@ -176,7 +176,7 @@ function SummaryCard({
 }) {
   return (
     <div
-      className={`rounded-lg border bg-card p-5 ${
+      className={`rounded-xl border border-border bg-card p-5 ${
         highlight ? "ring-2 ring-primary/40" : ""
       }`}
     >

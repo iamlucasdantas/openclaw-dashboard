@@ -55,7 +55,7 @@ export default async function NewClientAgentPage({
       />
 
       {unknownTemplate ? (
-        <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+        <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
           Template <code>{sp.template}</code> não foi encontrado. Escolha um
           modelo abaixo ou clique em <strong>criar do zero</strong>.
         </div>

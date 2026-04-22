@@ -100,7 +100,7 @@ export function SchedulePicker({
     <div className="space-y-3">
       <input type="hidden" name={name} value={cron} />
 
-      <div className="rounded-lg border bg-muted/30 p-3">
+      <div className="rounded-xl border border-border bg-muted/30 p-3">
         <p className="text-xs text-muted-foreground">Resumo:</p>
         <p className="mt-0.5 text-sm font-medium">{humanizeSchedule(cron)}</p>
         <code className="mt-0.5 block text-[10px] text-muted-foreground">

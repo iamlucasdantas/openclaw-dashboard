@@ -77,9 +77,9 @@ export function Button({
 }) {
   const styles = {
     primary:
-      "bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50",
+      "bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 shadow-sm shadow-primary/20",
     secondary:
-      "border bg-background hover:bg-accent hover:text-accent-foreground disabled:opacity-50",
+      "border border-border bg-secondary text-secondary-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50",
     destructive:
       "bg-destructive text-destructive-foreground hover:opacity-90 disabled:opacity-50",
     ghost:
@@ -119,9 +119,9 @@ export function PageHeader({
   return (
     <div className="flex items-start justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
         {description ? (
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         ) : null}
       </div>
       {actions ? <div className="flex gap-2">{actions}</div> : null}

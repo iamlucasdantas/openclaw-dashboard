@@ -44,7 +44,7 @@ export function MobileNav({ activeRole }: { activeRole: ActiveRole }) {
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setOpen(false)}
           />
-          <aside className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-card shadow-xl">
+          <aside className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col border-r border-border bg-secondary/95 shadow-xl backdrop-blur-md">
             <div className="flex h-14 items-center justify-between border-b px-4">
               <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">

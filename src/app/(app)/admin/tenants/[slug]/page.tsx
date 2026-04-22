@@ -70,7 +70,7 @@ export default async function TenantDetailPage({
         </div>
       </div>
 
-      <section className="rounded-lg border bg-card">
+      <section className="rounded-xl border border-border bg-card">
         <div className="border-b px-5 py-3">
           <h2 className="text-sm font-semibold">Limite mensal de custo</h2>
           <p className="text-xs text-muted-foreground">
@@ -87,7 +87,7 @@ export default async function TenantDetailPage({
         </div>
       </section>
 
-      <section className="rounded-lg border bg-card">
+      <section className="rounded-xl border border-border bg-card">
         <div className="flex items-center justify-between border-b px-5 py-3">
           <h2 className="text-sm font-semibold">
             Agentes ({agentCount})
@@ -100,7 +100,7 @@ export default async function TenantDetailPage({
           </Link>
         </div>
         <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
+          <thead className="bg-secondary/50 text-xs uppercase tracking-wider text-muted-foreground">
             <tr>
               <th className="px-5 py-2 text-left">Nome</th>
               <th className="px-5 py-2 text-left">agentId</th>
@@ -146,14 +146,14 @@ export default async function TenantDetailPage({
         </table>
       </section>
 
-      <section className="rounded-lg border bg-card">
+      <section className="rounded-xl border border-border bg-card">
         <div className="flex items-center justify-between border-b px-5 py-3">
           <h2 className="text-sm font-semibold">
             Usuários ({userCount})
           </h2>
         </div>
         <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
+          <thead className="bg-secondary/50 text-xs uppercase tracking-wider text-muted-foreground">
             <tr>
               <th className="px-5 py-2 text-left">Nome</th>
               <th className="px-5 py-2 text-left">Email</th>

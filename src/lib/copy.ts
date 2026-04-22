@@ -345,6 +345,10 @@ export const copy = {
         one: "salvou 1 memória",
         many: "salvou {n} memórias",
       },
+      "agent-activity": {
+        one: "gerou 1 entrega real",
+        many: "gerou {n} entregas reais",
+      },
       generic: {
         one: "executou 1 ação",
         many: "executou {n} ações",

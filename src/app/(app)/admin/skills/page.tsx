@@ -2,38 +2,44 @@ import Link from "next/link";
 import { Plus, Sparkles } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { Button, PageHeader } from "@/components/form";
-import { EmptyState } from "@/components/empty-state";
-import { CATEGORIES, catMeta } from "@/lib/skill-meta";
+import { catMeta, CATEGORIES } from "@/lib/skill-meta";
+import { filterRelevantActivities } from "@/lib/activity-relevance";
 
 export default async function SkillsPage() {
   const skills = await prisma.skill.findMany({
     orderBy: [{ category: "asc" }, { name: "asc" }],
     include: {
       _count: { select: { installations: true } },
+      installations: {
+        include: {
+          activities: {
+            select: {
+              summary: true,
+              body: true,
+              contentUrl: true,
+              occurredAt: true,
+            },
+          },
+        },
+      },
     },
   });
 
-  const recentPerSkill = await prisma.skillActivity.groupBy({
-    by: ["agentSkillId"],
-    _count: { _all: true },
-    _max: { occurredAt: true },
-  });
-
-  // Precisa mapear agentSkill.skillId para somar por skill
-  const installsToSkill = await prisma.agentSkill.findMany({
-    select: { id: true, skillId: true },
-  });
-  const askToSkill = new Map(installsToSkill.map((i) => [i.id, i.skillId]));
   const activitiesBySkill = new Map<string, { count: number; last: Date | null }>();
-  for (const r of recentPerSkill) {
-    const sk = askToSkill.get(r.agentSkillId);
-    if (!sk) continue;
-    const cur = activitiesBySkill.get(sk) ?? { count: 0, last: null };
-    cur.count += r._count._all;
-    if (r._max.occurredAt && (!cur.last || r._max.occurredAt > cur.last)) {
-      cur.last = r._max.occurredAt;
-    }
-    activitiesBySkill.set(sk, cur);
+  for (const skill of skills) {
+    const relevantActivities = filterRelevantActivities(
+      skill.installations.flatMap((installation) => installation.activities)
+    );
+
+    const last = relevantActivities.reduce<Date | null>(
+      (acc, activity) => (!acc || activity.occurredAt > acc ? activity.occurredAt : acc),
+      null
+    );
+
+    activitiesBySkill.set(skill.id, {
+      count: relevantActivities.length,
+      last,
+    });
   }
 
   const byCategory = new Map<string, typeof skills>();
@@ -43,7 +49,6 @@ export default async function SkillsPage() {
     byCategory.set(s.category, arr);
   }
 
-  // ordena categorias conhecidas primeiro
   const orderedCats = Object.keys(CATEGORIES).filter((c) => byCategory.has(c));
   for (const c of byCategory.keys()) {
     if (!orderedCats.includes(c)) orderedCats.push(c);
@@ -53,7 +58,7 @@ export default async function SkillsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Habilidades"
-        description="Tudo que seus agentes podem fazer. Clique em uma habilidade para ver detalhes e histórico."
+        description="Tudo que seus agentes podem fazer. O contador abaixo considera só execuções úteis, sem logs genéricos."
         actions={
           <Link href="/admin/skills/new">
             <Button>
@@ -65,7 +70,7 @@ export default async function SkillsPage() {
       />
 
       {skills.length === 0 ? (
-        <div className="rounded-lg border bg-card p-10 text-center">
+        <div className="rounded-xl border border-border bg-card p-10 text-center">
           <Sparkles className="mx-auto mb-3 h-6 w-6 text-muted-foreground" />
           <p className="text-sm">Catálogo vazio.</p>
           <Link
@@ -97,7 +102,7 @@ export default async function SkillsPage() {
                     <Link
                       key={s.id}
                       href={`/admin/skills/${s.id}`}
-                      className="group rounded-lg border bg-card p-4 transition hover:border-primary hover:shadow-sm"
+                      className="group rounded-xl border border-border bg-card p-4 transition hover:border-primary/40 hover:shadow-[0_0_20px_rgba(34,211,238,0.08)]"
                     >
                       <div className="mb-2 flex items-start justify-between gap-2">
                         <div>
@@ -127,7 +132,7 @@ export default async function SkillsPage() {
                           {s._count.installations} agente(s) instalaram
                         </span>
                         <span>
-                          {act?.count ?? 0} atividade(s) recentes
+                          {act?.count ?? 0} atividade(s) úteis
                         </span>
                       </div>
                     </Link>

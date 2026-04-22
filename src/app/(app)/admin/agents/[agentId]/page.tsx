@@ -8,10 +8,12 @@ import {
   activityCounts,
   activityTimeline,
   upcomingTasksForAgent,
+  taskTimeline,
 } from "@/lib/agent-queries";
 import { AgentHeader } from "@/components/agent-tabs/AgentHeader";
 import type { TabKey } from "@/components/agent-tabs/AgentHeader";
 import { TabSummary } from "@/components/agent-tabs/TabSummary";
+import { TabTasks } from "@/components/agent-tabs/TabTasks";
 import { TabActivity } from "@/components/agent-tabs/TabActivity";
 import { TabConnections } from "@/components/agent-tabs/TabConnections";
 import { TabDeveloper } from "@/components/agent-tabs/TabDeveloper";
@@ -28,11 +30,12 @@ export default async function AdminAgentDetailPage({
   const { agentId } = await params;
   const sp = await searchParams;
   const tab: TabKey =
+    sp.tab === "tasks" ||
     sp.tab === "activity" ||
     sp.tab === "connections" ||
     sp.tab === "dev"
       ? (sp.tab as TabKey)
-      : "summary";
+      : "tasks";
   const range: Range =
     sp.range === "7d" || sp.range === "30d" ? sp.range : "today";
 
@@ -90,7 +93,6 @@ export default async function AdminAgentDetailPage({
         upcoming={upcoming}
         editHref={`${basePath}/edit`}
         scheduleHref="/admin/crons"
-        // Admin: Excluir vive em /edit → Zona de perigo, não aqui.
         onDeleteAction={null}
         agentName={agent.name}
         crons={agent.crons.map((c) => ({
@@ -98,8 +100,33 @@ export default async function AdminAgentDetailPage({
           name: c.name,
           schedule: c.schedule,
           state: c.state,
+          nextRunAt: c.nextRunAt,
           agent: { agentId: agent.agentId, name: agent.name },
         }))}
+        agentHrefPrefix="/admin/agents"
+      />
+    );
+  } else if (tab === "tasks") {
+    const raw = await taskTimeline(agent.id, range);
+    const tasks = raw.map((t: any) => ({
+      id: t.id,
+      title: t.title,
+      status: t.status,
+      category: t.category,
+      result: t.result,
+      resultType: t.resultType,
+      resultUrl: t.resultUrl,
+      deliverableData: t.deliverableData,
+      startedAt: t.startedAt,
+      resolvedAt: t.resolvedAt,
+      _count: t._count,
+      agent: { agentId: agent.agentId, name: agent.name },
+    }));
+    tabContent = (
+      <TabTasks
+        range={range}
+        basePath={`${basePath}?tab=tasks`}
+        tasks={tasks}
         agentHrefPrefix="/admin/agents"
       />
     );
@@ -208,6 +235,7 @@ export default async function AdminAgentDetailPage({
           name: agent.name,
           persona: agent.persona,
           tenantName: agent.tenant.name,
+          avatarUrl: agent.avatarUrl,
         }}
         status={status}
         currentTab={tab}

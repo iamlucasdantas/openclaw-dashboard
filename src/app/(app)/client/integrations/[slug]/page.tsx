@@ -69,7 +69,7 @@ export default async function ClientIntegrationDetailPage({
           value={skill.installations.length.toString()}
         />
         <Stat
-          label="Atividades (30 dias)"
+          label="Atividades relevantes (30 dias)"
           value={activities.length.toString()}
         />
         <Stat
@@ -97,14 +97,14 @@ export default async function ClientIntegrationDetailPage({
                   {i.agent.name}
                 </Link>
                 <div className="text-xs text-muted-foreground">
-                  {i.agent.tenant.name} · {i.activities.length} atividade(s)
+                  {i.agent.tenant.name} · {i.activities.length} atividade(s) relevante(s)
                 </div>
               </div>
               <span
                 className={
                   "rounded-full px-2 py-0.5 text-xs " +
                   (i.enabled
-                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
+                    ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20"
                     : "bg-muted text-muted-foreground")
                 }
               >
@@ -126,8 +126,7 @@ export default async function ClientIntegrationDetailPage({
             O que foi feito nos últimos 30 dias
           </h2>
           <p className="text-xs text-muted-foreground">
-            Imagens e links abrem direto. Texto completo fica abaixo de cada
-            atividade.
+            Só atividades úteis, sem placeholders genéricos.
           </p>
         </div>
         <ul className="divide-y">
@@ -141,7 +140,7 @@ export default async function ClientIntegrationDetailPage({
           ))}
           {activities.length === 0 && (
             <li className="px-5 py-10 text-center text-xs text-muted-foreground">
-              Nenhuma atividade registrada pra esta integração no período.
+              Nenhuma atividade útil registrada pra esta integração no período.
             </li>
           )}
         </ul>
@@ -160,7 +159,7 @@ function Stat({
   hint?: string;
 }) {
   return (
-    <div className="rounded-lg border bg-card p-4">
+    <div className="rounded-xl border border-border bg-card p-4">
       <div className="text-xs uppercase tracking-wider text-muted-foreground">
         {label}
       </div>

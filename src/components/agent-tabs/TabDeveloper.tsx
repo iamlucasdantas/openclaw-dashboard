@@ -18,7 +18,7 @@ type Props = {
 export function TabDeveloper({ agent, scope, githubIntegration }: Props) {
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+      <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
         <div className="flex gap-2">
           <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
           <p>{copy.agent.detail.dev.warning}</p>
@@ -34,7 +34,7 @@ export function TabDeveloper({ agent, scope, githubIntegration }: Props) {
         </a>
       </div>
 
-      <section className="rounded-lg border bg-card p-5">
+      <section className="rounded-xl border border-border bg-card p-5">
         <div className="mb-2 flex items-center justify-between gap-3">
           <h2 className="text-sm font-semibold">
             {copy.agent.detail.dev.identifier}

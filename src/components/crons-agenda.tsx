@@ -7,6 +7,7 @@ export type AgendaCron = {
   name: string;
   schedule: string;
   state: string;
+  nextRunAt?: Date | null;
   agent?: {
     agentId: string;
     name: string;
@@ -32,7 +33,7 @@ function groupByDay(
 
   for (const c of crons) {
     if (c.state !== "active") continue;
-    const runs = nextRunsFor(c.schedule, 20, today);
+    const runs = nextRunsFor(c.schedule, 20, today, c.nextRunAt);
     const byDay = new Map<string, Date[]>();
     for (const r of runs) {
       const key = new Date(r);
@@ -63,7 +64,7 @@ export function CronsAgenda({
 
   if (!hasAny) {
     return (
-      <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
+      <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
         Nenhuma tarefa agendada ativa nos próximos 7 dias.
       </div>
     );
@@ -74,9 +75,9 @@ export function CronsAgenda({
       {days.map(({ day, items }) => (
         <section
           key={day.toISOString()}
-          className="rounded-lg border bg-card"
+          className="rounded-xl border border-border bg-card"
         >
-          <div className="flex items-center justify-between border-b px-5 py-2.5">
+          <div className="flex items-center justify-between border-b border-border px-5 py-2.5">
             <h3 className="text-sm font-semibold">{formatDayLabel(day)}</h3>
             <span className="text-[11px] text-muted-foreground">
               {day.toLocaleDateString("pt-BR", {

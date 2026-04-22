@@ -14,7 +14,7 @@ export default async function RootLayout({
 }) {
   const theme = await getTheme();
   return (
-    <html lang="pt-BR" className={`h-full ${theme === "dark" ? "dark" : ""}`}>
+    <html lang="pt-BR" className="h-full dark">
       <body className="min-h-full bg-background text-foreground antialiased">
         {children}
       </body>

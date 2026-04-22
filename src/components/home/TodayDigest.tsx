@@ -12,9 +12,9 @@ export function TodayDigest({ entries }: { entries: TodayEntry[] }) {
   const hasAny = entries.some((e) => e.groups.length > 0);
 
   return (
-    <section className="rounded-xl border bg-card">
-      <div className="border-b px-5 py-3">
-        <h2 className="text-sm font-semibold">
+    <section className="rounded-xl border border-border bg-card">
+      <div className="border-b border-border px-5 py-3">
+        <h2 className="text-sm font-semibold text-foreground">
           {t(copy.home.sections.today, { date: today })}
         </h2>
       </div>

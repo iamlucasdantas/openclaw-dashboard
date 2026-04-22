@@ -68,7 +68,7 @@ export default async function UserDetailPage({
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="rounded-lg border bg-card">
+        <section className="rounded-xl border border-border bg-card">
           <div className="border-b px-5 py-3">
             <h2 className="text-sm font-semibold">Dados</h2>
           </div>
@@ -85,7 +85,7 @@ export default async function UserDetailPage({
           </div>
         </section>
 
-        <section className="rounded-lg border bg-card">
+        <section className="rounded-xl border border-border bg-card">
           <div className="border-b px-5 py-3">
             <h2 className="text-sm font-semibold">Redefinir senha</h2>
           </div>
@@ -95,7 +95,7 @@ export default async function UserDetailPage({
         </section>
       </div>
 
-      <section className="rounded-lg border bg-card">
+      <section className="rounded-xl border border-border bg-card">
         <div className="border-b px-5 py-3">
           <h2 className="text-sm font-semibold">
             Clientes vinculados ({user.memberships.length})

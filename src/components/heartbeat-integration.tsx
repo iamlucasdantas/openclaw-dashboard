@@ -27,7 +27,7 @@ export async function HeartbeatIntegration({
   -d '{"version":"1.0.0","status":"online"}'`;
 
   return (
-    <section className="rounded-lg border bg-card">
+    <section className="rounded-xl border border-border bg-card">
       <div className="border-b px-5 py-3">
         <h2 className="text-sm font-semibold">Integração · Heartbeat</h2>
         <p className="text-xs text-muted-foreground">

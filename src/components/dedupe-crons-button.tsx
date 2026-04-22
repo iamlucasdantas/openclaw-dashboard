@@ -12,7 +12,7 @@ export function DedupeCronsBanner({ duplicates }: { duplicates: number }) {
   if (duplicates === 0) return null;
   if (done !== null) {
     return (
-      <div className="flex items-center gap-2 rounded-md border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100">
+      <div className="flex items-center gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-200">
         <Check className="h-4 w-4" aria-hidden />
         {done} tarefa(s) duplicada(s) removida(s).
       </div>
@@ -20,7 +20,7 @@ export function DedupeCronsBanner({ duplicates }: { duplicates: number }) {
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-start gap-2">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
         <div>

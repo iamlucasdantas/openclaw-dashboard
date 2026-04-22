@@ -6,7 +6,7 @@ import { formatClock, formatDayLabel } from "@/lib/schedule";
 
 export function UpcomingTaskCard({ next }: { next: NextTask | null }) {
   return (
-    <section className="flex h-full flex-col rounded-xl border bg-card p-5">
+    <section className="flex h-full flex-col rounded-xl border border-border bg-card p-5">
       <div className="flex items-center gap-2">
         <CalendarDays className="h-4 w-4 text-muted-foreground" aria-hidden />
         <h2 className="text-sm font-semibold">

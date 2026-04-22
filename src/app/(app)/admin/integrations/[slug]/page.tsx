@@ -77,14 +77,14 @@ export default async function AdminIntegrationDetailPage({
                     {i.agent.tenant.name}
                   </Link>
                   {" · "}
-                  {i.activities.length} atividade(s)
+                  {i.activities.length} atividade(s) relevante(s)
                 </div>
               </div>
               <span
                 className={
                   "rounded-full px-2 py-0.5 text-xs " +
                   (i.enabled
-                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
+                    ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20"
                     : "bg-muted text-muted-foreground")
                 }
               >
@@ -105,6 +105,9 @@ export default async function AdminIntegrationDetailPage({
           <h2 className="text-sm font-semibold">
             Histórico consolidado ({activities.length})
           </h2>
+          <p className="text-xs text-muted-foreground">
+            Mostrando só atividade útil, sem placeholders genéricos.
+          </p>
         </div>
         <ul className="divide-y">
           {activities.map((a) => (
@@ -117,7 +120,7 @@ export default async function AdminIntegrationDetailPage({
           ))}
           {activities.length === 0 && (
             <li className="px-5 py-10 text-center text-xs text-muted-foreground">
-              Nenhuma atividade registrada no período.
+              Nenhuma atividade útil registrada no período.
             </li>
           )}
         </ul>

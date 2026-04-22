@@ -33,7 +33,7 @@ export function TabActivity({
           <span className="text-xs text-muted-foreground">
             {copy.agent.detail.activity.filtersLabel}
           </span>
-          <div className="inline-flex items-center rounded-md border bg-background p-0.5">
+          <div className="inline-flex items-center rounded-lg border border-border bg-secondary p-0.5">
             {filters.map((r) => {
               const active = r === range;
               const href = r === "today" ? basePath : `${basePath}&range=${r}`;
@@ -63,7 +63,7 @@ export function TabActivity({
         </p>
       </div>
 
-      <section className="rounded-lg border bg-card">
+      <section className="rounded-xl border border-border bg-card">
         <ul className="divide-y">
           {activities.length === 0 ? (
             <li className="px-5 py-8 text-center text-sm text-muted-foreground">

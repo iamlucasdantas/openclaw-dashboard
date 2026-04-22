@@ -20,7 +20,7 @@ export function Header({
   theme: Theme;
 }) {
   return (
-    <header className="flex h-14 items-center justify-between gap-3 border-b bg-card px-4 md:px-6">
+    <header className="flex h-14 items-center justify-between gap-3 border-b border-border bg-secondary/40 px-4 md:px-6">
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <MobileNav activeRole={activeRole} />
         <HeaderTrail />

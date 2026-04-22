@@ -14,6 +14,7 @@ export default auth((req) => {
     path.startsWith("/invite/") ||
     path.startsWith("/api/auth") ||
     path.startsWith("/api/agents/") ||
+    path.startsWith("/api/media/openclaw/") ||
     path.startsWith("/_next");
 
   if (!isAuthed && !isPublic) {

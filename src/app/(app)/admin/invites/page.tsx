@@ -43,9 +43,9 @@ export default async function InvitesPage() {
         }
       />
 
-      <div className="overflow-x-auto rounded-lg border bg-card">
+      <div className="overflow-x-auto rounded-xl border border-border bg-card">
         <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
+          <thead className="bg-secondary/50 text-xs uppercase tracking-wider text-muted-foreground">
             <tr>
               <th className="px-5 py-2.5 text-left">Email</th>
               <th className="px-5 py-2.5 text-left">Papéis</th>
@@ -121,8 +121,8 @@ export default async function InvitesPage() {
 
 function StatusPill({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    pendente: "bg-amber-50 text-amber-700",
-    aceito: "bg-emerald-50 text-emerald-700",
+    pendente: "bg-amber-500/15 text-amber-300 border border-amber-500/20",
+    aceito: "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20",
     expirado: "bg-muted text-muted-foreground",
   };
   return (

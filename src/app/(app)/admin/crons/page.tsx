@@ -110,7 +110,7 @@ export default async function AdminCronsPage({
       />
 
       {filtered.length === 0 ? (
-        <div className="rounded-lg border bg-card">
+        <div className="rounded-xl border border-border bg-card">
           <table className="w-full">
             <tbody>
               <EmptyState
@@ -132,6 +132,7 @@ export default async function AdminCronsPage({
             name: c.name,
             schedule: c.schedule,
             state: c.state,
+            nextRunAt: c.nextRunAt,
             agent: { agentId: c.agent.agentId, name: c.agent.name },
           }))}
         />
@@ -143,6 +144,7 @@ export default async function AdminCronsPage({
             name: c.name,
             schedule: c.schedule,
             state: c.state,
+            nextRunAt: c.nextRunAt,
             agent: {
               agentId: c.agent.agentId,
               name: c.agent.name,
@@ -152,9 +154,9 @@ export default async function AdminCronsPage({
           }))}
         />
       ) : (
-        <div className="overflow-x-auto rounded-lg border bg-card">
+        <div className="overflow-x-auto rounded-xl border border-border bg-card">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
+            <thead className="bg-secondary/50 text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="px-5 py-2.5 text-left">Cliente</th>
                 <th className="px-5 py-2.5 text-left">Agente</th>
@@ -218,9 +220,9 @@ export default async function AdminCronsPage({
 
 function StateBadge({ state }: { state: string }) {
   const styles: Record<string, string> = {
-    active: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
-    paused: "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
-    disabled: "bg-muted text-muted-foreground",
+    active: "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20",
+    paused: "bg-amber-500/15 text-amber-300 border border-amber-500/20",
+    disabled: "bg-muted/60 text-muted-foreground border border-border",
   };
   const labels: Record<string, string> = {
     active: "ativa",

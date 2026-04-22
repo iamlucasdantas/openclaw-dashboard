@@ -47,7 +47,7 @@ export function BudgetBar({
           {formatUsd(used - budget)}.
         </div>
       ) : near ? (
-        <div className="flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400">
+        <div className="flex items-center gap-1 text-xs text-amber-300">
           <AlertTriangle className="h-3 w-3" /> Atenção: {pct.toFixed(0)}% do
           limite usado.
         </div>

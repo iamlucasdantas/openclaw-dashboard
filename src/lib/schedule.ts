@@ -1,18 +1,66 @@
 import cronstrue from "cronstrue/i18n";
 
-// Converte cron expression ou @shorthand em texto natural em PT-BR.
+const SHORTHAND: Record<string, string> = {
+  "@hourly": "0 * * * *",
+  "@daily": "0 0 * * *",
+  "@midnight": "0 0 * * *",
+  "@weekly": "0 0 * * 0",
+  "@monthly": "0 0 1 * *",
+  "@yearly": "0 0 1 1 *",
+  "@annually": "0 0 1 1 *",
+};
+
+function parseEverySchedule(schedule: string) {
+  const m = schedule.trim().match(/^every\s+(\d+)\s*([mhd])$/i);
+  if (!m) return null;
+  const amount = Number(m[1]);
+  const unit = m[2].toLowerCase();
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+  const ms = unit === "m" ? amount * 60_000 : unit === "h" ? amount * 3_600_000 : amount * 86_400_000;
+  return { amount, unit, ms };
+}
+
+function parseAtSchedule(schedule: string) {
+  const trimmed = schedule.trim();
+  if (!trimmed.includes("T")) return null;
+  const ms = Date.parse(trimmed);
+  if (!Number.isFinite(ms)) return null;
+  return new Date(ms);
+}
+
+// Converte cron expression, every Xm ou data única em texto natural em PT-BR.
 export function humanizeSchedule(schedule: string): string {
   const trimmed = schedule.trim();
-  const shorthand: Record<string, string> = {
-    "@hourly": "0 * * * *",
-    "@daily": "0 0 * * *",
-    "@midnight": "0 0 * * *",
-    "@weekly": "0 0 * * 0",
-    "@monthly": "0 0 1 * *",
-    "@yearly": "0 0 1 1 *",
-    "@annually": "0 0 1 1 *",
-  };
-  const expr = shorthand[trimmed] ?? trimmed;
+  const every = parseEverySchedule(trimmed);
+  if (every) {
+    const unitLabel =
+      every.unit === "m"
+        ? every.amount === 1
+          ? "minuto"
+          : "minutos"
+        : every.unit === "h"
+          ? every.amount === 1
+            ? "hora"
+            : "horas"
+          : every.amount === 1
+            ? "dia"
+            : "dias";
+    return `A cada ${every.amount} ${unitLabel}`;
+  }
+
+  const at = parseAtSchedule(trimmed);
+  if (at) {
+    return at.toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  }
+
+  const expr = SHORTHAND[trimmed] ?? trimmed;
 
   try {
     return cronstrue.toString(expr, {
@@ -56,19 +104,35 @@ function matches(field: CronField, value: number): boolean {
   return field.values.includes(value);
 }
 
-// Calcula as próximas execuções. Simples e em-memória.
-export function nextRunsFor(schedule: string, count: number, from = new Date()): Date[] {
+// Calcula as próximas execuções. Suporta cron, shorthands, every Xm/Xh/Xd e datas únicas ISO.
+export function nextRunsFor(
+  schedule: string,
+  count: number,
+  from = new Date(),
+  seedNextRun?: Date | null
+): Date[] {
   const trimmed = schedule.trim();
-  const shorthand: Record<string, string> = {
-    "@hourly": "0 * * * *",
-    "@daily": "0 0 * * *",
-    "@midnight": "0 0 * * *",
-    "@weekly": "0 0 * * 0",
-    "@monthly": "0 0 1 * *",
-    "@yearly": "0 0 1 1 *",
-    "@annually": "0 0 1 1 *",
-  };
-  const expr = shorthand[trimmed] ?? trimmed;
+
+  const every = parseEverySchedule(trimmed);
+  if (every) {
+    const out: Date[] = [];
+    let cursor = seedNextRun ? new Date(seedNextRun) : new Date(from.getTime() + every.ms);
+    while (cursor.getTime() <= from.getTime()) {
+      cursor = new Date(cursor.getTime() + every.ms);
+    }
+    while (out.length < count) {
+      out.push(new Date(cursor));
+      cursor = new Date(cursor.getTime() + every.ms);
+    }
+    return out;
+  }
+
+  const at = parseAtSchedule(trimmed);
+  if (at) {
+    return at.getTime() > from.getTime() ? [at] : [];
+  }
+
+  const expr = SHORTHAND[trimmed] ?? trimmed;
   const parts = expr.split(/\s+/);
   if (parts.length !== 5) return [];
 

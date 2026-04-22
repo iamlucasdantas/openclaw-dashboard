@@ -3,6 +3,7 @@ import { effectiveStatus, humanStatusKey } from "@/lib/agent-status";
 import { startOfDay, startOfMonth } from "@/lib/costs";
 import { nextRunsFor } from "@/lib/schedule";
 import type { EffectiveStatus } from "@/lib/agent-status";
+import { filterRelevantActivities } from "@/lib/activity-relevance";
 
 // ———————— "Hoje" ————————
 
@@ -36,7 +37,7 @@ export async function todayDigest(tenantIds: string[]): Promise<TodayEntry[]> {
           skill: { select: { slug: true } },
           activities: {
             where: { occurredAt: { gte: start } },
-            select: { status: true },
+            select: { status: true, summary: true, body: true, contentUrl: true },
           },
         },
       },
@@ -47,7 +48,7 @@ export async function todayDigest(tenantIds: string[]): Promise<TodayEntry[]> {
   return agents.map((a) => {
     const groups: TodayGroup[] = [];
     for (const s of a.skills) {
-      const acts = s.activities;
+      const acts = filterRelevantActivities(s.activities);
       if (acts.length === 0) continue;
       const hasError = acts.some((x) => x.status === "error");
       const hasWarn = acts.some((x) => x.status === "warning");
@@ -58,7 +59,6 @@ export async function todayDigest(tenantIds: string[]): Promise<TodayEntry[]> {
         hasIssue: hasError || hasWarn,
       });
     }
-    // ordena por contagem desc — mais relevante primeiro
     groups.sort((x, y) => y.count - x.count);
     return {
       agent: {
@@ -93,7 +93,7 @@ export async function nextTask(tenantIds: string[]): Promise<NextTask | null> {
 
   let soonest: NextTask | null = null;
   for (const c of crons) {
-    const runs = nextRunsFor(c.schedule, 1);
+    const runs = nextRunsFor(c.schedule, 1, new Date(), c.nextRunAt);
     const t = runs[0];
     if (!t) continue;
     if (!soonest || t.getTime() < soonest.when.getTime()) {
@@ -112,8 +112,8 @@ export async function nextTask(tenantIds: string[]): Promise<NextTask | null> {
 
 export type BudgetSnapshot = {
   spentUsd: number;
-  budgetUsd: number | null; // soma dos limites mensais dos tenants
-  projectionUsd: number; // projeção linear de fim de mês
+  budgetUsd: number | null;
+  projectionUsd: number;
   pctOfBudget: number | null;
 };
 
@@ -136,7 +136,6 @@ export async function budgetSnapshot(
       where: { id: { in: tenantIds } },
       select: { monthlyBudgetUsd: true },
     }),
-    // Também considera budgets de agentes (somados aos dos tenants).
     prisma.agent.findMany({
       where: { tenantId: { in: tenantIds } },
       select: { monthlyBudgetUsd: true },
@@ -145,9 +144,8 @@ export async function budgetSnapshot(
 
   const spentUsd = spentAgg._sum.costUsd ?? 0;
 
-  // Projeção linear: spent * (daysInMonth / daysElapsed).
   const now = new Date();
-  const daysElapsed = now.getDate(); // dias decorridos no mês (inclui hoje)
+  const daysElapsed = now.getDate();
   const daysInMonth = new Date(
     now.getFullYear(),
     now.getMonth() + 1,
@@ -203,7 +201,7 @@ export async function myAssistantsSummary(
         select: {
           activities: {
             where: { occurredAt: { gte: start } },
-            select: { id: true },
+            select: { id: true, summary: true, body: true, contentUrl: true },
           },
         },
       },
@@ -213,7 +211,7 @@ export async function myAssistantsSummary(
 
   return agents.map((a) => {
     const tasksToday = a.skills.reduce(
-      (s, sk) => s + sk.activities.length,
+      (s, sk) => s + filterRelevantActivities(sk.activities).length,
       0
     );
     const status = effectiveStatus(a);

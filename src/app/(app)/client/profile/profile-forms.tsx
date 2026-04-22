@@ -36,7 +36,7 @@ export function ProfileForm({
       </Field>
       <FormError message={state.error} />
       {state.success ? (
-        <p className="rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+        <p className="rounded-md bg-emerald-500/15 px-3 py-2 text-xs text-emerald-300 border border-emerald-500/20">
           {state.success}
         </p>
       ) : null}
@@ -64,7 +64,7 @@ export function PasswordForm() {
       </Field>
       <FormError message={state.error} />
       {state.success ? (
-        <p className="rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+        <p className="rounded-md bg-emerald-500/15 px-3 py-2 text-xs text-emerald-300 border border-emerald-500/20">
           {state.success}
         </p>
       ) : null}

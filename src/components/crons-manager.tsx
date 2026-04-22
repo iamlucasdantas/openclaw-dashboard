@@ -51,8 +51,8 @@ export function CronsManager({
   const [state, formAction] = useFormState<CronFormState, FormData>(action, {});
 
   return (
-    <section className="rounded-lg border bg-card">
-      <div className="flex flex-col gap-3 border-b px-5 py-3 sm:flex-row sm:items-start sm:justify-between">
+    <section className="rounded-xl border border-border bg-card">
+      <div className="flex flex-col gap-3 border-b border-border px-5 py-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="flex items-center gap-2 text-sm font-semibold">
             <CalendarDays className="h-4 w-4" /> Tarefas agendadas
@@ -83,7 +83,7 @@ export function CronsManager({
         )}
       </ul>
 
-      <form action={formAction} className="space-y-4 border-t p-4">
+      <form action={formAction} className="space-y-4 border-t border-border p-4">
         <input type="hidden" name="agentDbId" value={agentDbId} />
 
         <Field label="Nome" error={state.fieldErrors?.name}>
@@ -125,7 +125,7 @@ export function CronsManager({
 
 function CronRowItem({ row }: { row: CronRow }) {
   const [pending, startTransition] = useTransition();
-  const upcoming = row.state === "active" ? nextRunsFor(row.schedule, 3) : [];
+  const upcoming = row.state === "active" ? nextRunsFor(row.schedule, 3, new Date(), row.nextRunAt) : [];
 
   return (
     <li className="flex items-start justify-between gap-3 px-5 py-3">
@@ -138,8 +138,8 @@ function CronRowItem({ row }: { row: CronRow }) {
               className={
                 "rounded-full px-2 py-0.5 text-[11px] " +
                 (row.lastRunStatus === "ok"
-                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
-                  : "bg-destructive/10 text-destructive")
+                  ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20"
+                  : "bg-destructive/15 text-destructive border border-destructive/20")
               }
             >
               última: {row.lastRunStatus}
@@ -210,9 +210,9 @@ function CronRowItem({ row }: { row: CronRow }) {
 
 function StateBadge({ state }: { state: string }) {
   const styles: Record<string, string> = {
-    active: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
-    paused: "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
-    disabled: "bg-muted text-muted-foreground",
+    active: "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20",
+    paused: "bg-amber-500/15 text-amber-300 border border-amber-500/20",
+    disabled: "bg-muted/60 text-muted-foreground border border-border",
   };
   const labels: Record<string, string> = {
     active: "ativa",

@@ -46,8 +46,8 @@ export function TabConnections({
         wizardHref={scheduleWizardHref}
       />
 
-      <section className="rounded-lg border bg-card">
-        <div className="border-b px-5 py-3">
+      <section className="rounded-xl border border-border bg-card">
+        <div className="border-b border-border px-5 py-3">
           <h2 className="flex items-center gap-2 text-sm font-semibold">
             <Github className="h-4 w-4" aria-hidden />
             {copy.agent.detail.connections.githubTitle}

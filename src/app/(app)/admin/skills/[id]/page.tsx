@@ -2,11 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Pencil } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { Button, PageHeader } from "@/components/form";
+import { Button } from "@/components/form";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { ActivityItem } from "@/components/activity-item";
 import { catMeta } from "@/lib/skill-meta";
 import { cleanupOldSkillActivities } from "@/lib/retention";
+import { filterRelevantActivities } from "@/lib/activity-relevance";
 
 export default async function SkillDetailPage({
   params,
@@ -35,8 +36,12 @@ export default async function SkillDetailPage({
   if (!skill) notFound();
   const meta = catMeta(skill.category);
 
-  // Junta todas as atividades de todas as installations, ordenadas por data
-  const allActivities = skill.installations
+  const normalizedInstallations = skill.installations.map((i) => ({
+    ...i,
+    activities: filterRelevantActivities(i.activities),
+  }));
+
+  const allActivities = normalizedInstallations
     .flatMap((i) =>
       i.activities.map((a) => ({
         ...a,
@@ -107,24 +112,26 @@ export default async function SkillDetailPage({
           value={skill.installations.filter((i) => i.enabled).length.toString()}
         />
         <Card
-          label="Atividades (30 dias)"
+          label="Atividades relevantes (30 dias)"
           value={allActivities.length.toString()}
           hint={
             statusCounts.error
               ? `${statusCounts.error} com erro`
               : statusCounts.warning
                 ? `${statusCounts.warning} com aviso`
-                : "todas ok"
+                : allActivities.length > 0
+                  ? "todas úteis"
+                  : "sem execução útil ainda"
           }
         />
       </div>
 
-      <section className="rounded-lg border bg-card">
+      <section className="rounded-xl border border-border bg-card">
         <div className="border-b px-5 py-3">
           <h2 className="text-sm font-semibold">Agentes que usam esta habilidade</h2>
         </div>
         <ul className="divide-y">
-          {skill.installations.map((i) => (
+          {normalizedInstallations.map((i) => (
             <li
               key={i.id}
               className="flex items-center justify-between px-5 py-3 text-sm"
@@ -144,14 +151,14 @@ export default async function SkillDetailPage({
                     {i.agent.tenant.name}
                   </Link>
                   {" · "}
-                  {i.activities.length} atividade(s)
+                  {i.activities.length} atividade(s) relevante(s)
                 </div>
               </div>
               <span
                 className={
                   "rounded-full px-2 py-0.5 text-xs " +
                   (i.enabled
-                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
+                    ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20"
                     : "bg-muted text-muted-foreground")
                 }
               >
@@ -167,14 +174,13 @@ export default async function SkillDetailPage({
         </ul>
       </section>
 
-      <section className="rounded-lg border bg-card">
+      <section className="rounded-xl border border-border bg-card">
         <div className="border-b px-5 py-3">
           <h2 className="text-sm font-semibold">
             Histórico de atividades ({allActivities.length})
           </h2>
           <p className="text-xs text-muted-foreground">
-            Últimos 30 dias. Clique em cada linha para abrir o conteúdo.
-            Atividades mais antigas são removidas automaticamente.
+            Últimos 30 dias, sem logs genéricos. Clique em cada linha para abrir o conteúdo.
           </p>
         </div>
         <ul className="divide-y">
@@ -187,7 +193,7 @@ export default async function SkillDetailPage({
           ))}
           {allActivities.length === 0 && (
             <li className="px-5 py-8 text-center text-xs text-muted-foreground">
-              Ainda não há atividades registradas.
+              Ainda não há atividades úteis registradas.
             </li>
           )}
         </ul>
@@ -206,7 +212,7 @@ function Card({
   hint?: string;
 }) {
   return (
-    <div className="rounded-lg border bg-card p-4">
+    <div className="rounded-xl border border-border bg-card p-4">
       <div className="text-xs uppercase tracking-wider text-muted-foreground">
         {label}
       </div>

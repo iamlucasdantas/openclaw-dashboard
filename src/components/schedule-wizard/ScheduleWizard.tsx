@@ -326,7 +326,7 @@ function FrequencyDetails({
 }) {
   if (state.freq === "minutes") {
     return (
-      <div className="rounded-lg border bg-card p-4">
+      <div className="rounded-xl border border-border bg-card p-4">
         <label className="flex flex-wrap items-center gap-2 text-sm">
           <span>A cada</span>
           <select
@@ -350,7 +350,7 @@ function FrequencyDetails({
 
   if (state.freq === "hourly") {
     return (
-      <div className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">
+      <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
         Rodando sempre no minuto 0 de cada hora (00:00, 01:00, 02:00, …).
       </div>
     );
@@ -358,7 +358,7 @@ function FrequencyDetails({
 
   if (state.freq === "daily") {
     return (
-      <div className="rounded-lg border bg-card p-4">
+      <div className="rounded-xl border border-border bg-card p-4">
         <label className="flex flex-wrap items-center gap-2 text-sm">
           <span>Todos os dias às</span>
           <TimePicker
@@ -374,7 +374,7 @@ function FrequencyDetails({
 
   if (state.freq === "weekly") {
     return (
-      <div className="rounded-lg border bg-card p-4">
+      <div className="rounded-xl border border-border bg-card p-4">
         <label className="flex flex-wrap items-center gap-2 text-sm">
           <span>Toda</span>
           <select
@@ -404,7 +404,7 @@ function FrequencyDetails({
 
   if (state.freq === "monthly") {
     return (
-      <div className="rounded-lg border bg-card p-4">
+      <div className="rounded-xl border border-border bg-card p-4">
         <label className="flex flex-wrap items-center gap-2 text-sm">
           <span>No dia</span>
           <select
@@ -434,7 +434,7 @@ function FrequencyDetails({
 
   // advanced
   return (
-    <div className="space-y-1 rounded-lg border bg-card p-4">
+    <div className="space-y-1 rounded-xl border border-border bg-card p-4">
       <input
         value={state.advanced}
         onChange={(e) => onChange({ ...state, advanced: e.target.value })}

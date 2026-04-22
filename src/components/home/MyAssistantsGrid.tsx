@@ -16,7 +16,7 @@ export function MyAssistantsGrid({ items }: { items: AssistantCard[] }) {
           <Link
             key={a.id}
             href={`/client/agents/${a.agentId}`}
-            className="group rounded-xl border bg-card p-4 transition hover:border-primary hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="group rounded-xl border border-border bg-card p-4 transition hover:border-primary/40 hover:shadow-[0_0_20px_rgba(34,211,238,0.08)] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <div className="mb-2 flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">

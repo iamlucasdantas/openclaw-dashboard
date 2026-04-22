@@ -19,7 +19,7 @@ export default async function AcceptInvitePage({
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
-      <div className="w-full max-w-md rounded-lg border bg-card p-8 shadow-sm">
+      <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 shadow-sm">
         <div className="mb-6 text-center">
           <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <span className="text-sm font-bold">OC</span>

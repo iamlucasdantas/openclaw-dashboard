@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type ActivityForDisplay = {
@@ -37,8 +37,9 @@ export function ActivityItem({
 }) {
   const hasMedia = a.contentType === "image" && a.contentUrl;
   const hasLink = a.contentType === "link" && a.contentUrl;
+  const hasFile = a.contentType === "file" && a.contentUrl;
   const hasBody = !!a.body;
-  const hasAny = hasMedia || hasLink || hasBody;
+  const hasAny = hasMedia || hasLink || hasFile || hasBody;
 
   if (density === "compact") return <CompactRow a={a} agentHrefPrefix={agentHrefPrefix} />;
 
@@ -63,6 +64,11 @@ export function ActivityItem({
             {a.contentType === "link" ? (
               <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wider">
                 link
+              </span>
+            ) : null}
+            {a.contentType === "file" ? (
+              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wider">
+                arquivo
               </span>
             ) : null}
             {a.agent && agentHrefPrefix ? (
@@ -109,6 +115,18 @@ export function ActivityItem({
                 </a>
               ) : null}
 
+              {hasFile ? (
+                <a
+                  href={a.contentUrl!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-2 text-xs font-medium hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <FileText className="h-4 w-4" aria-hidden />
+                  Abrir arquivo
+                </a>
+              ) : null}
+
               {hasBody ? (
                 <details open={!hasMedia}>
                   <summary className="cursor-pointer select-none text-[11px] text-muted-foreground hover:text-foreground">
@@ -137,7 +155,8 @@ function CompactRow({
   const hasContent =
     !!a.body ||
     (a.contentType === "image" && a.contentUrl) ||
-    (a.contentType === "link" && a.contentUrl);
+    (a.contentType === "link" && a.contentUrl) ||
+    (a.contentType === "file" && a.contentUrl);
   return (
     <li className="px-5 py-3 text-sm">
       <details className="group">
@@ -198,6 +217,17 @@ function CompactRow({
               >
                 <ExternalLink className="h-3 w-3" aria-hidden />
                 {truncateUrl(a.contentUrl)}
+              </a>
+            ) : null}
+            {a.contentType === "file" && a.contentUrl ? (
+              <a
+                href={a.contentUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1.5 text-xs font-medium hover:bg-accent"
+              >
+                <FileText className="h-3 w-3" aria-hidden />
+                Abrir arquivo
               </a>
             ) : null}
             {a.body ? (

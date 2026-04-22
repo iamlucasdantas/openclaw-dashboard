@@ -3,17 +3,17 @@ import { Check, Clock, AlertCircle } from "lucide-react";
 const MAP: Record<string, { label: string; css: string; Icon: any }> = {
   synced: {
     label: "Sincronizado",
-    css: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
+    css: "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20",
     Icon: Check,
   },
   pending: {
     label: "Pendente",
-    css: "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
+    css: "bg-amber-500/15 text-amber-300 border border-amber-500/20",
     Icon: Clock,
   },
   error: {
     label: "Erro",
-    css: "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300",
+    css: "bg-rose-500/15 text-rose-300 border border-rose-500/20",
     Icon: AlertCircle,
   },
 };

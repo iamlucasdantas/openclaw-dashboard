@@ -25,12 +25,12 @@ const ACTION_LABELS: Record<string, string> = {
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
-  tenant: "bg-blue-50 text-blue-700",
-  agent: "bg-violet-50 text-violet-700",
-  user: "bg-amber-50 text-amber-700",
-  membership: "bg-cyan-50 text-cyan-700",
-  invite: "bg-pink-50 text-pink-700",
-  profile: "bg-muted text-muted-foreground",
+  tenant: "bg-blue-500/15 text-blue-300 border border-blue-500/20",
+  agent: "bg-violet-500/15 text-violet-300 border border-violet-500/20",
+  user: "bg-amber-500/15 text-amber-300 border border-amber-500/20",
+  membership: "bg-cyan-500/15 text-cyan-300 border border-cyan-500/20",
+  invite: "bg-pink-500/15 text-pink-300 border border-pink-500/20",
+  profile: "bg-secondary text-muted-foreground border border-border",
 };
 
 export default async function AuditPage() {
@@ -46,9 +46,9 @@ export default async function AuditPage() {
         description="Últimos 200 eventos registrados no painel."
       />
 
-      <div className="overflow-x-auto rounded-lg border bg-card">
+      <div className="overflow-x-auto rounded-xl border border-border bg-card">
         <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
+          <thead className="bg-secondary/50 text-xs uppercase tracking-wider text-muted-foreground">
             <tr>
               <th className="px-5 py-2.5 text-left">Quando</th>
               <th className="px-5 py-2.5 text-left">Quem</th>

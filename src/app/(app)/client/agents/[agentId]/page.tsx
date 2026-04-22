@@ -9,10 +9,12 @@ import {
   activityCounts,
   activityTimeline,
   upcomingTasksForAgent,
+  taskTimeline,
 } from "@/lib/agent-queries";
 import { AgentHeader } from "@/components/agent-tabs/AgentHeader";
 import type { TabKey } from "@/components/agent-tabs/AgentHeader";
 import { TabSummary } from "@/components/agent-tabs/TabSummary";
+import { TabTasks } from "@/components/agent-tabs/TabTasks";
 import { TabActivity } from "@/components/agent-tabs/TabActivity";
 import { TabConnections } from "@/components/agent-tabs/TabConnections";
 import { TabDeveloper } from "@/components/agent-tabs/TabDeveloper";
@@ -34,11 +36,12 @@ export default async function ClientAgentDetailPage({
   const { agentId } = await params;
   const sp = await searchParams;
   const tab: TabKey =
+    sp.tab === "tasks" ||
     sp.tab === "activity" ||
     sp.tab === "connections" ||
     sp.tab === "dev"
       ? (sp.tab as TabKey)
-      : "summary";
+      : "tasks";
   const range: Range =
     sp.range === "7d" || sp.range === "30d" ? sp.range : "today";
 
@@ -122,8 +125,33 @@ export default async function ClientAgentDetailPage({
           name: c.name,
           schedule: c.schedule,
           state: c.state,
+          nextRunAt: c.nextRunAt,
           agent: { agentId: agent.agentId, name: agent.name },
         }))}
+        agentHrefPrefix="/client/agents"
+      />
+    );
+  } else if (tab === "tasks") {
+    const raw = await taskTimeline(agent.id, range);
+    const tasks = raw.map((t: any) => ({
+      id: t.id,
+      title: t.title,
+      status: t.status,
+      category: t.category,
+      result: t.result,
+      resultType: t.resultType,
+      resultUrl: t.resultUrl,
+      deliverableData: t.deliverableData,
+      startedAt: t.startedAt,
+      resolvedAt: t.resolvedAt,
+      _count: t._count,
+      agent: { agentId: agent.agentId, name: agent.name },
+    }));
+    tabContent = (
+      <TabTasks
+        range={range}
+        basePath={`${basePath}?tab=tasks`}
+        tasks={tasks}
         agentHrefPrefix="/client/agents"
       />
     );
@@ -232,6 +260,7 @@ export default async function ClientAgentDetailPage({
           name: agent.name,
           persona: agent.persona,
           tenantName: agent.tenant.name,
+          avatarUrl: agent.avatarUrl,
         }}
         status={status}
         currentTab={tab}

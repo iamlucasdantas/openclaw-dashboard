@@ -65,7 +65,7 @@ export function GithubSection({
   );
 
   return (
-    <section className="rounded-lg border bg-card">
+    <section className="rounded-xl border border-border bg-card">
       <div className="flex items-center justify-between border-b px-5 py-3">
         <div>
           <h2 className="flex items-center gap-2 text-sm font-semibold">
@@ -153,7 +153,7 @@ export function GithubSection({
           <div className="sm:col-span-2">
             <FormError message={saveState.error} />
             {saveState.success ? (
-              <p className="mb-3 rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+              <p className="mb-3 rounded-md bg-emerald-500/15 px-3 py-2 text-xs text-emerald-300 border border-emerald-500/20 dark:bg-emerald-950/50 dark:text-emerald-300">
                 {saveState.success}
               </p>
             ) : null}
@@ -275,7 +275,7 @@ function RepoManager({
         <div className="sm:col-span-4">
           <FormError message={addState.error} />
           {addState.success ? (
-            <p className="rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+            <p className="rounded-md bg-emerald-500/15 px-3 py-2 text-xs text-emerald-300 border border-emerald-500/20 dark:bg-emerald-950/50 dark:text-emerald-300">
               {addState.success}
             </p>
           ) : null}

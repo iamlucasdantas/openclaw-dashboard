@@ -25,7 +25,7 @@ export function BudgetSnapshotCard({ snapshot }: { snapshot: Snapshot }) {
   const pctClamped = Math.min(100, pctOfBudget ?? 0);
 
   return (
-    <section className="flex h-full flex-col rounded-xl border bg-card p-5">
+    <section className="flex h-full flex-col rounded-xl border border-border bg-card p-5">
       <div className="flex items-center gap-2">
         <DollarSign className="h-4 w-4 text-muted-foreground" aria-hidden />
         <h2 className="text-sm font-semibold">
@@ -69,7 +69,7 @@ export function BudgetSnapshotCard({ snapshot }: { snapshot: Snapshot }) {
             {copy.home.sections.budgetAlertCritical}
           </p>
         ) : warn ? (
-          <p className="mt-1 flex items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-300">
+          <p className="mt-1 flex items-center gap-1 text-xs font-medium text-amber-300">
             <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
             {t(copy.home.sections.budgetAlertWarn, { pct: pctOfBudget! })}
           </p>

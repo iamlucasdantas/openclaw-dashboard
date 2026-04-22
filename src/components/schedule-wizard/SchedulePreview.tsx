@@ -9,7 +9,7 @@ export function SchedulePreview({ schedule }: { schedule: string }) {
   const upcoming = nextRunsFor(schedule, 3);
 
   return (
-    <div className="rounded-lg border bg-muted/30 p-4">
+    <div className="rounded-xl border border-border bg-muted/30 p-4">
       <p className="text-xs uppercase tracking-wider text-muted-foreground">
         {copy.schedule.wizard.preview.title}
       </p>

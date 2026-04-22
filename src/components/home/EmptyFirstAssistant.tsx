@@ -4,8 +4,8 @@ import { copy } from "@/lib/copy";
 
 export function EmptyFirstAssistant() {
   return (
-    <section className="mx-auto max-w-lg rounded-xl border bg-card p-8 text-center sm:p-12">
-      <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+    <section className="mx-auto max-w-lg rounded-2xl border border-border bg-card p-8 text-center sm:p-12">
+      <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 text-primary">
         <Bot className="h-6 w-6" aria-hidden="true" />
       </div>
       <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">

@@ -7,8 +7,8 @@ export default async function LoginPage() {
   if (session?.user) redirect("/");
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
-      <div className="w-full max-w-sm rounded-lg border bg-card p-8 shadow-sm">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-8 shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
         <div className="mb-6 text-center">
           <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <span className="text-sm font-bold">OC</span>

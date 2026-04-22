@@ -7,22 +7,22 @@ type PillStyle = { css: string; dot: string };
 const ADMIN_MAP: Record<EffectiveStatus, { label: string } & PillStyle> = {
   online: {
     label: "online",
-    css: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
-    dot: "bg-emerald-500",
+    css: "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20",
+    dot: "bg-emerald-400",
   },
   stale: {
     label: "sem heartbeat",
-    css: "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
-    dot: "bg-amber-500",
+    css: "bg-amber-500/15 text-amber-300 border border-amber-500/20",
+    dot: "bg-amber-400",
   },
   degraded: {
     label: "degradado",
-    css: "bg-orange-50 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300",
-    dot: "bg-orange-500",
+    css: "bg-orange-500/15 text-orange-300 border border-orange-500/20",
+    dot: "bg-orange-400",
   },
   offline: {
     label: "offline",
-    css: "bg-muted text-muted-foreground",
+    css: "bg-muted/60 text-muted-foreground border border-border",
     dot: "bg-muted-foreground/60",
   },
 };
@@ -30,20 +30,20 @@ const ADMIN_MAP: Record<EffectiveStatus, { label: string } & PillStyle> = {
 // Camada cliente: estados semânticos (copy.status.*).
 const CLIENT_STYLE: Record<ReturnType<typeof humanStatusKey>, PillStyle> = {
   working: {
-    css: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
-    dot: "bg-emerald-500",
+    css: "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20",
+    dot: "bg-emerald-400",
   },
   quiet: {
-    css: "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
-    dot: "bg-amber-500",
+    css: "bg-amber-500/15 text-amber-300 border border-amber-500/20",
+    dot: "bg-amber-400",
   },
   attention: {
-    css: "bg-orange-50 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300",
-    dot: "bg-orange-500",
+    css: "bg-orange-500/15 text-orange-300 border border-orange-500/20",
+    dot: "bg-orange-400",
   },
   stopped: {
-    css: "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300",
-    dot: "bg-rose-500",
+    css: "bg-rose-500/15 text-rose-300 border border-rose-500/20",
+    dot: "bg-rose-400",
   },
 };
 

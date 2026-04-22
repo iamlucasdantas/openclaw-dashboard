@@ -62,10 +62,10 @@ export function HomeGreeting({
 
   const toneCss =
     tone === "critical"
-      ? "bg-rose-50 text-rose-900 border-rose-200 dark:bg-rose-950/30 dark:text-rose-100 dark:border-rose-900"
+      ? "bg-rose-500/10 text-rose-100 border-rose-500/20"
       : tone === "warn"
-        ? "bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-950/30 dark:text-amber-100 dark:border-amber-900"
-        : "bg-card text-foreground border";
+        ? "bg-amber-500/10 text-amber-100 border-amber-500/20"
+        : "bg-card text-foreground border-border";
 
   return (
     <section
@@ -79,7 +79,7 @@ export function HomeGreeting({
           <p className="text-base font-medium sm:text-lg">
             {t(greeting, { name })}
             {isAdminInClientView ? (
-              <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 align-middle text-[10px] font-medium uppercase tracking-wider text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+              <span className="ml-2 rounded-full bg-amber-500/15 px-2 py-0.5 align-middle text-[10px] font-medium uppercase tracking-wider text-amber-300 border border-amber-500/20">
                 {copy.home.headlineAdminBadge}
               </span>
             ) : null}

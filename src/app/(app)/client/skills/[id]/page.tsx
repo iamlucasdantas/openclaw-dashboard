@@ -6,6 +6,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { ActivityItem } from "@/components/activity-item";
 import { catMeta } from "@/lib/skill-meta";
 import { cleanupOldSkillActivities } from "@/lib/retention";
+import { filterRelevantActivities } from "@/lib/activity-relevance";
 
 export default async function ClientSkillDetailPage({
   params,
@@ -35,7 +36,12 @@ export default async function ClientSkillDetailPage({
   if (!skill) notFound();
   const meta = catMeta(skill.category);
 
-  const allActivities = skill.installations
+  const normalizedInstallations = skill.installations.map((i) => ({
+    ...i,
+    activities: filterRelevantActivities(i.activities),
+  }));
+
+  const allActivities = normalizedInstallations
     .flatMap((i) =>
       i.activities.map((a) => ({
         ...a,
@@ -80,17 +86,17 @@ export default async function ClientSkillDetailPage({
           value={skill.installations.length.toString()}
         />
         <Card
-          label="Atividades (30 dias)"
+          label="Atividades relevantes (30 dias)"
           value={allActivities.length.toString()}
         />
       </div>
 
-      <section className="rounded-lg border bg-card">
+      <section className="rounded-xl border border-border bg-card">
         <div className="border-b px-5 py-3">
           <h2 className="text-sm font-semibold">Seus agentes que usam</h2>
         </div>
         <ul className="divide-y">
-          {skill.installations.map((i) => (
+          {normalizedInstallations.map((i) => (
             <li
               key={i.id}
               className="flex items-center justify-between px-5 py-3 text-sm"
@@ -103,14 +109,14 @@ export default async function ClientSkillDetailPage({
                   {i.agent.name}
                 </Link>
                 <div className="text-xs text-muted-foreground">
-                  {i.agent.tenant.name} · {i.activities.length} atividade(s)
+                  {i.agent.tenant.name} · {i.activities.length} atividade(s) relevante(s)
                 </div>
               </div>
               <span
                 className={
                   "rounded-full px-2 py-0.5 text-xs " +
                   (i.enabled
-                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
+                    ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20"
                     : "bg-muted text-muted-foreground")
                 }
               >
@@ -126,15 +132,13 @@ export default async function ClientSkillDetailPage({
         </ul>
       </section>
 
-      <section className="rounded-lg border bg-card">
+      <section className="rounded-xl border border-border bg-card">
         <div className="border-b px-5 py-3">
           <h2 className="text-sm font-semibold">
             Histórico ({allActivities.length})
           </h2>
           <p className="text-xs text-muted-foreground">
-            Últimos 30 dias. Clique em cada atividade para ver o conteúdo exato
-            (texto, imagem ou link). Atividades mais antigas são removidas
-            automaticamente.
+            Últimos 30 dias, sem logs genéricos. Clique em cada atividade para ver o conteúdo exato.
           </p>
         </div>
         <ul className="divide-y">
@@ -147,7 +151,7 @@ export default async function ClientSkillDetailPage({
           ))}
           {allActivities.length === 0 && (
             <li className="px-5 py-8 text-center text-xs text-muted-foreground">
-              Ainda não há atividades registradas.
+              Ainda não há atividades úteis registradas.
             </li>
           )}
         </ul>
@@ -158,7 +162,7 @@ export default async function ClientSkillDetailPage({
 
 function Card({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border bg-card p-4">
+    <div className="rounded-xl border border-border bg-card p-4">
       <div className="text-xs uppercase tracking-wider text-muted-foreground">
         {label}
       </div>

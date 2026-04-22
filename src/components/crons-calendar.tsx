@@ -16,6 +16,7 @@ export type CalendarCron = {
   name: string;
   schedule: string;
   state: string;
+  nextRunAt?: Date | null;
   agent?: {
     agentId: string;
     name: string;
@@ -95,7 +96,7 @@ export function CronsCalendar({
     horizon.setDate(horizon.getDate() + 35);
     for (const c of crons) {
       if (c.state !== "active") continue;
-      const runs = nextRunsFor(c.schedule, 60, today);
+      const runs = nextRunsFor(c.schedule, 60, today, c.nextRunAt);
       for (const r of runs) {
         if (r > horizon) break;
         const key = new Date(r);
@@ -185,8 +186,8 @@ export function CronsCalendar({
         </div>
       ) : null}
 
-      <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
-        <div className="grid grid-cols-7 border-b bg-muted/40 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-[0_0_40px_rgba(0,0,0,0.2)]">
+        <div className="grid grid-cols-7 border-b border-border bg-secondary/40 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           {WEEK_LABELS.map((l, i) => (
             <div
               key={l}
@@ -364,12 +365,12 @@ function DayPanel({
       className="fixed inset-0 z-50 flex items-end justify-end sm:items-stretch"
     >
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden
       />
-      <aside className="relative flex h-[80vh] w-full flex-col overflow-hidden rounded-t-2xl bg-card shadow-xl sm:h-full sm:max-w-md sm:rounded-l-2xl sm:rounded-t-none">
-        <div className="flex items-start justify-between gap-3 border-b px-5 py-4">
+      <aside className="relative flex h-[80vh] w-full flex-col overflow-hidden rounded-t-2xl bg-card border-t border-border shadow-xl sm:h-full sm:max-w-md sm:rounded-l-2xl sm:rounded-t-none">
+        <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
           <div>
             <h2
               id="day-panel-title"
