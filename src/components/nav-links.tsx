@@ -48,11 +48,7 @@ export function NavLinks({
   const clientNav = [
     { href: "/client", label: copy.nav.client.home, icon: LayoutDashboard },
     { href: "/client/agents", label: copy.nav.client.agents, icon: Bot },
-    {
-      href: "/client/integrations",
-      label: copy.nav.client.integrations,
-      icon: Plug,
-    },
+    // Integrations moved to agent detail page tab
     {
       href: "/client/prospecting",
       label: copy.nav.client.prospecting,

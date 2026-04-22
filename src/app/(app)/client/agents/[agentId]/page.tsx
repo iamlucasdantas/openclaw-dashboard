@@ -15,7 +15,7 @@ import { AgentHeader } from "@/components/agent-tabs/AgentHeader";
 import type { TabKey } from "@/components/agent-tabs/AgentHeader";
 import { TabSummary } from "@/components/agent-tabs/TabSummary";
 import { TabTasks } from "@/components/agent-tabs/TabTasks";
-import { TabActivity } from "@/components/agent-tabs/TabActivity";
+import { TabActivity } from "@/components/agent-tabs/TabActivity"; // kept for future use
 import { TabConnections } from "@/components/agent-tabs/TabConnections";
 import { TabDeveloper } from "@/components/agent-tabs/TabDeveloper";
 import { deleteAgent } from "@/app/actions/agents";
@@ -37,7 +37,6 @@ export default async function ClientAgentDetailPage({
   const sp = await searchParams;
   const tab: TabKey =
     sp.tab === "tasks" ||
-    sp.tab === "activity" ||
     sp.tab === "connections" ||
     sp.tab === "dev"
       ? (sp.tab as TabKey)
@@ -152,26 +151,6 @@ export default async function ClientAgentDetailPage({
         range={range}
         basePath={`${basePath}?tab=tasks`}
         tasks={tasks}
-        agentHrefPrefix="/client/agents"
-      />
-    );
-  } else if (tab === "activity") {
-    const raw = await activityTimeline(agent.id, range);
-    const activities = raw.map((a) => ({
-      id: a.id,
-      summary: a.summary,
-      body: a.body,
-      contentType: a.contentType,
-      contentUrl: a.contentUrl,
-      status: a.status,
-      occurredAt: a.occurredAt,
-      agent: { agentId: agent.agentId, name: agent.name },
-    }));
-    tabContent = (
-      <TabActivity
-        range={range}
-        basePath={`${basePath}?tab=activity`}
-        activities={activities}
         agentHrefPrefix="/client/agents"
       />
     );

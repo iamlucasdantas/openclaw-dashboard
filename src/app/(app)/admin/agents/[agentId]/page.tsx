@@ -31,7 +31,6 @@ export default async function AdminAgentDetailPage({
   const sp = await searchParams;
   const tab: TabKey =
     sp.tab === "tasks" ||
-    sp.tab === "activity" ||
     sp.tab === "connections" ||
     sp.tab === "dev"
       ? (sp.tab as TabKey)
@@ -127,26 +126,6 @@ export default async function AdminAgentDetailPage({
         range={range}
         basePath={`${basePath}?tab=tasks`}
         tasks={tasks}
-        agentHrefPrefix="/admin/agents"
-      />
-    );
-  } else if (tab === "activity") {
-    const raw = await activityTimeline(agent.id, range);
-    const activities = raw.map((a) => ({
-      id: a.id,
-      summary: a.summary,
-      body: a.body,
-      contentType: a.contentType,
-      contentUrl: a.contentUrl,
-      status: a.status,
-      occurredAt: a.occurredAt,
-      agent: { agentId: agent.agentId, name: agent.name },
-    }));
-    tabContent = (
-      <TabActivity
-        range={range}
-        basePath={`${basePath}?tab=activity`}
-        activities={activities}
         agentHrefPrefix="/admin/agents"
       />
     );

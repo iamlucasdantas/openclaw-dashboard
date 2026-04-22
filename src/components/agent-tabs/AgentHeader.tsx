@@ -4,13 +4,12 @@ import { StatusPill } from "@/components/status-pill";
 import type { EffectiveStatus } from "@/lib/agent-status";
 import { cn } from "@/lib/utils";
 
-export type TabKey = "summary" | "tasks" | "activity" | "connections" | "dev";
+export type TabKey = "summary" | "tasks" | "connections" | "dev";
 
 const TABS: { key: TabKey; label: string; clientOnly?: boolean }[] = [
   { key: "tasks", label: "Tarefas" },
-  { key: "activity", label: "Interações" },
   { key: "summary", label: "Resumo" },
-  { key: "connections", label: "Conexões" },
+  { key: "connections", label: "Integrações" },
   { key: "dev", label: "Modo desenvolvedor" },
 ];
 

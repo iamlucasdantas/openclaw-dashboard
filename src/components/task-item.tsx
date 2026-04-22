@@ -288,10 +288,13 @@ export function TaskItem({ task, agentHrefPrefix }: {
     : destinationLinks[0];
   const articleNodes = isBlog ? renderArticleContent(content) : [];
 
+  // Completed tasks with deliverables show content directly (no collapse)
+  const showDirectly = task.status === 'completed' && hasDeliverables;
+
   return (
     <li className="group rounded-xl border border-border bg-card/80 backdrop-blur-sm transition-all hover:border-primary/30 hover:bg-card">
-      <details>
-        <summary className="list-none cursor-pointer px-5 py-4">
+      <details open={showDirectly}>
+        <summary className={cn("list-none cursor-pointer px-5 py-4", showDirectly && "cursor-default")}>
           <div className="flex items-start gap-3">
             <StatusIcon className={cn("mt-0.5 h-4 w-4 shrink-0", statusCfg.color)} aria-hidden />
 
