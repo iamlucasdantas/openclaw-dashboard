@@ -311,9 +311,10 @@ export function TaskItem({ task, agentHrefPrefix }: {
   const destinationLinks = isSocial ? normalizedLinks.filter((link) => !link.isBlogLike) : [];
   const hasDeliverables = images.length > 0 || normalizedLinks.length > 0 || content.length > 0;
   const previewText = content.replace(/\s+/g, " ").trim().slice(0, 260);
+  // For social posts, don't show blog link in collapsed summary (it goes in "Artigo relacionado")
   const collapsedPrimaryLink = isBlog
     ? relatedLinks[0]
-    : destinationLinks[0];
+    : destinationLinks[0] || null;
   const articleNodes = isBlog ? renderArticleContent(content) : [];
 
   // Completed tasks with deliverables show content directly (no collapse)

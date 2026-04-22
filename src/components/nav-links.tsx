@@ -34,7 +34,7 @@ export function NavLinks({
     { href: "/admin", label: copy.nav.admin.overview, icon: LayoutDashboard },
     { href: "/admin/tenants", label: copy.nav.admin.tenants, icon: Building2 },
     { href: "/admin/agents", label: copy.nav.admin.agents, icon: Bot },
-    { href: "/admin/integrations", label: copy.nav.admin.integrations, icon: Plug },
+    // Integrations moved to agent detail page tab
     { href: "/admin/prospecting", label: copy.nav.admin.prospecting, icon: Target },
     { href: "/admin/github", label: copy.nav.admin.github, icon: Github },
     { href: "/admin/skills", label: copy.nav.admin.skills, icon: Sparkles },

@@ -84,6 +84,8 @@ export function TabTasks({ range, basePath, tasks, agentHrefPrefix, initialView 
     const now = new Date();
     return { year: now.getFullYear(), month: now.getMonth() };
   });
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [expandedDay, setExpandedDay] = useState<string | null>(null);
 
   const filters: Range[] = ["today", "24h", "7d", "30d", "60d", "all"];
 
@@ -217,21 +219,32 @@ export function TabTasks({ range, basePath, tasks, agentHrefPrefix, initialView 
                       </div>
                       <div className="space-y-0.5">
                         {dayTasks.slice(0, 3).map((t) => (
-                          <div
+                          <button
                             key={t.id}
+                            onClick={() => {
+                              setSelectedTaskId(selectedTaskId === t.id ? null : t.id);
+                              setExpandedDay(null);
+                            }}
                             className={cn(
-                              "truncate rounded px-1 py-0.5 text-[9px] leading-tight",
-                              STATUS_DOTS[t.status] || "bg-gray-500/20"
+                              "w-full truncate rounded px-1 py-0.5 text-[9px] leading-tight text-left transition-colors hover:brightness-125 cursor-pointer",
+                              STATUS_DOTS[t.status] || "bg-gray-500/20",
+                              selectedTaskId === t.id && "ring-1 ring-primary"
                             )}
                             title={t.title}
                           >
                             {t.title.length > 20 ? t.title.slice(0, 18) + "…" : t.title}
-                          </div>
+                          </button>
                         ))}
                         {dayTasks.length > 3 && (
-                          <div className="text-[9px] text-muted-foreground pl-1">
+                          <button
+                            onClick={() => {
+                              setExpandedDay(expandedDay === dateStr ? null : dateStr);
+                              setSelectedTaskId(null);
+                            }}
+                            className="text-[9px] text-primary hover:underline cursor-pointer pl-1"
+                          >
                             +{dayTasks.length - 3} mais
-                          </div>
+                          </button>
                         )}
                       </div>
                     </div>
@@ -240,6 +253,38 @@ export function TabTasks({ range, basePath, tasks, agentHrefPrefix, initialView 
               </div>
             ))}
           </div>
+
+          {/* Selected task detail */}
+          {selectedTaskId && (() => {
+            const task = tasks.find(t => t.id === selectedTaskId);
+            if (!task) return null;
+            return (
+              <div className="mt-4 rounded-xl border border-primary/30 bg-card p-1">
+                <TaskItem task={task} agentHrefPrefix={agentHrefPrefix} />
+              </div>
+            );
+          })()}
+
+          {/* Expanded day — shows all tasks for that day */}
+          {expandedDay && !selectedTaskId && (() => {
+            const dayTasks = tasksByDate.get(expandedDay) || [];
+            if (dayTasks.length === 0) return null;
+            const [y, m, d] = expandedDay.split('-').map(Number);
+            const label = `${d}/${m}/${y}`;
+            return (
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-foreground">{label} — {dayTasks.length} {dayTasks.length === 1 ? 'tarefa' : 'tarefas'}</h4>
+                  <button onClick={() => setExpandedDay(null)} className="text-xs text-muted-foreground hover:text-foreground">Fechar</button>
+                </div>
+                <ul className="space-y-2">
+                  {dayTasks.map(task => (
+                    <TaskItem key={task.id} task={task} agentHrefPrefix={agentHrefPrefix} />
+                  ))}
+                </ul>
+              </div>
+            );
+          })()}
 
           {/* Legend */}
           <div className="mt-4 flex items-center gap-4 border-t border-border pt-3">
