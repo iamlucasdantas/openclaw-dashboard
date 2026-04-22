@@ -20,7 +20,7 @@ import { TabConnections } from "@/components/agent-tabs/TabConnections";
 import { TabDeveloper } from "@/components/agent-tabs/TabDeveloper";
 import { deleteAgent } from "@/app/actions/agents";
 
-type Range = "today" | "7d" | "30d";
+type Range = "today" | "24h" | "7d" | "30d" | "60d" | "all";
 
 export default async function ClientAgentDetailPage({
   params,
@@ -42,7 +42,8 @@ export default async function ClientAgentDetailPage({
       ? (sp.tab as TabKey)
       : "tasks";
   const range: Range =
-    sp.range === "7d" || sp.range === "30d" ? sp.range : "today";
+    sp.range === "7d" || sp.range === "30d" || sp.range === "60d" || sp.range === "24h" || sp.range === "all"
+      ? sp.range : "today";
 
   const [agent, skillCatalog] = await Promise.all([
     prisma.agent.findUnique({

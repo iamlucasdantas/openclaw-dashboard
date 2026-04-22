@@ -146,21 +146,24 @@ function isVisibleDeliverableTask(task: any) {
 
 export async function taskTimeline(
   agentDbId: string,
-  range: "today" | "7d" | "30d"
+  range: "today" | "24h" | "7d" | "30d" | "60d" | "all"
 ) {
   const now = new Date();
-  let gte = new Date(now);
+  let gte: Date | undefined = new Date(now);
   if (range === "today") gte = zonedStartOfDay(now);
-  if (range === "7d") gte.setDate(gte.getDate() - 7);
-  if (range === "30d") gte.setDate(gte.getDate() - 30);
+  else if (range === "24h") gte.setDate(gte.getDate() - 1);
+  else if (range === "7d") gte.setDate(gte.getDate() - 7);
+  else if (range === "30d") gte.setDate(gte.getDate() - 30);
+  else if (range === "60d") gte.setDate(gte.getDate() - 60);
+  else if (range === "all") gte = undefined;
+
+  const where: any = { agentId: agentDbId };
+  if (gte) where.startedAt = { gte };
 
   const tasks = await prisma.task.findMany({
-    where: {
-      agentId: agentDbId,
-      startedAt: { gte },
-    },
+    where,
     orderBy: { startedAt: "desc" },
-    take: 150,
+    take: range === "all" ? 500 : 150,
     include: {
       _count: { select: { activities: true } },
       activities: {

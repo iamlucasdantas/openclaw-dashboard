@@ -85,19 +85,47 @@ const PLATFORM_META: Record<string, { icon: string; label: string; badge: string
 const BLOG_LINK_PATTERNS = /(wordpress|wp-content|wp-json|\/blog\/|\/news\/|\/article\/|\/posts\/|thebeautybarqc\.com|wrexham\.com\.br)/i;
 
 function decodeEntities(value: string) {
+  // Named entities
   return value
-    .replace(/&#8217;/g, "'")
-    .replace(/&#8211;/g, "-")
-    .replace(/&#8212;/g, "-")
-    .replace(/&#8220;|&#8221;/g, '"')
-    .replace(/&#038;/g, "&")
-    .replace(/&#215;/g, "x")
-    .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
-    .replace(/&#39;/g, "'");
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&mdash;/g, "\u2014")
+    .replace(/&ndash;/g, "\u2013")
+    .replace(/&lsquo;/g, "\u2018")
+    .replace(/&rsquo;/g, "\u2019")
+    .replace(/&ldquo;/g, "\u201C")
+    .replace(/&rdquo;/g, "\u201D")
+    .replace(/&trade;/g, "\u2122")
+    .replace(/&copy;/g, "\u00A9")
+    .replace(/&reg;/g, "\u00AE")
+    .replace(/&hellip;/g, "\u2026")
+    .replace(/&bull;/g, "\u2022")
+    .replace(/&middot;/g, "\u00B7")
+    .replace(/&laquo;/g, "\u00AB")
+    .replace(/&raquo;/g, "\u00BB")
+    .replace(/&prime;/g, "\u2032")
+    .replace(/&eacute;/g, "\u00E9")
+    .replace(/&Eacute;/g, "\u00C9")
+    .replace(/&aacute;/g, "\u00E1")
+    .replace(/&Aacute;/g, "\u00C1")
+    .replace(/&oacute;/g, "\u00F3")
+    .replace(/&Oacute;/g, "\u00D3")
+    .replace(/&iacute;/g, "\u00ED")
+    .replace(/&Iacute;/g, "\u00CD")
+    .replace(/&uacute;/g, "\u00FA")
+    .replace(/&Uacute;/g, "\u00DA")
+    .replace(/&atilde;/g, "\u00E3")
+    .replace(/&otilde;/g, "\u00F5")
+    .replace(/&ccedil;/g, "\u00E7")
+    .replace(/&Ccedil;/g, "\u00C7")
+    // Numeric entities (decimal)
+    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(parseInt(code, 10)))
+    // Numeric entities (hex)
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, code) => String.fromCodePoint(parseInt(code, 16)));
 }
 
 function stripHtml(value: string) {
