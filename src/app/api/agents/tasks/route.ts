@@ -9,8 +9,8 @@ const AGENT_MAP: Record<string, string> = {
   'wrexham': 'wrexham',
 };
 
-const VALID_CATEGORIES = ['article', 'news', 'social_post', 'carousel', 'crm', 'other'];
-const VALID_STATUSES = ['started', 'in_progress', 'completed', 'failed'];
+const VALID_CATEGORIES = ['article', 'news', 'social_post', 'carousel', 'crm', 'wordpress_update', 'other'];
+const VALID_STATUSES = ['started', 'in_progress', 'completed', 'failed', 'overdue'];
 
 const DASHBOARD_KEY = process.env.DASHBOARD_API_KEY || 'changeme';
 
